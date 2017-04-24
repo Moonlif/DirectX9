@@ -34,45 +34,45 @@ void cHead::Setup()
 	//texture
 	m_vecVertex[0].t = D3DXVECTOR2(24, 15);
 	m_vecVertex[1].t = D3DXVECTOR2(24, 8);
-	m_vecVertex[2].t = D3DXVECTOR2(31, 8);
+	m_vecVertex[2].t = D3DXVECTOR2(32, 8);
 	m_vecVertex[3].t = D3DXVECTOR2(24, 15);
-	m_vecVertex[4].t = D3DXVECTOR2(31, 8);
-	m_vecVertex[5].t = D3DXVECTOR2(31, 15);
+	m_vecVertex[4].t = D3DXVECTOR2(32, 8);
+	m_vecVertex[5].t = D3DXVECTOR2(32, 15);
 
 	m_vecVertex[6].t = D3DXVECTOR2(0, 15);
 	m_vecVertex[7].t = D3DXVECTOR2(0, 8);
-	m_vecVertex[8].t = D3DXVECTOR2(7, 8);
+	m_vecVertex[8].t = D3DXVECTOR2(8, 8);
 	m_vecVertex[9].t = D3DXVECTOR2(0, 15);
-	m_vecVertex[10].t = D3DXVECTOR2(7, 8);
-	m_vecVertex[11].t = D3DXVECTOR2(7, 15);
+	m_vecVertex[10].t = D3DXVECTOR2(8, 8);
+	m_vecVertex[11].t = D3DXVECTOR2(8, 15);
 
 	m_vecVertex[12].t = D3DXVECTOR2(16, 15);
 	m_vecVertex[13].t = D3DXVECTOR2(16, 8);
-	m_vecVertex[14].t = D3DXVECTOR2(23, 8);
+	m_vecVertex[14].t = D3DXVECTOR2(24, 8);
 	m_vecVertex[15].t = D3DXVECTOR2(16, 15);
-	m_vecVertex[16].t = D3DXVECTOR2(23, 8);
-	m_vecVertex[17].t = D3DXVECTOR2(23, 15);
+	m_vecVertex[16].t = D3DXVECTOR2(24, 8);
+	m_vecVertex[17].t = D3DXVECTOR2(24, 15);
 
 	m_vecVertex[18].t = D3DXVECTOR2(8, 15);
 	m_vecVertex[19].t = D3DXVECTOR2(8, 8);
-	m_vecVertex[20].t = D3DXVECTOR2(15, 8);
+	m_vecVertex[20].t = D3DXVECTOR2(16, 8);
 	m_vecVertex[21].t = D3DXVECTOR2(8, 15);
-	m_vecVertex[22].t = D3DXVECTOR2(15, 8);
-	m_vecVertex[23].t = D3DXVECTOR2(15, 15);
+	m_vecVertex[22].t = D3DXVECTOR2(16, 8);
+	m_vecVertex[23].t = D3DXVECTOR2(16, 15);
 
 	m_vecVertex[24].t = D3DXVECTOR2(8, 7);
 	m_vecVertex[25].t = D3DXVECTOR2(8, 0);
-	m_vecVertex[26].t = D3DXVECTOR2(15, 0);
+	m_vecVertex[26].t = D3DXVECTOR2(16, 0);
 	m_vecVertex[27].t = D3DXVECTOR2(8, 7);
-	m_vecVertex[28].t = D3DXVECTOR2(15, 0);
-	m_vecVertex[29].t = D3DXVECTOR2(15, 7);
+	m_vecVertex[28].t = D3DXVECTOR2(16, 0);
+	m_vecVertex[29].t = D3DXVECTOR2(16, 7);
 
 	m_vecVertex[30].t = D3DXVECTOR2(16, 7);
 	m_vecVertex[31].t = D3DXVECTOR2(16, 0);
-	m_vecVertex[32].t = D3DXVECTOR2(23, 0);
+	m_vecVertex[32].t = D3DXVECTOR2(24, 0);
 	m_vecVertex[33].t = D3DXVECTOR2(16, 7);
-	m_vecVertex[34].t = D3DXVECTOR2(23, 0);
-	m_vecVertex[35].t = D3DXVECTOR2(23, 7);
+	m_vecVertex[34].t = D3DXVECTOR2(24, 0);
+	m_vecVertex[35].t = D3DXVECTOR2(24, 7);
 
 	for (int i = 0; i < 36; ++i)
 	{
