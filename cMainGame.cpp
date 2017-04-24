@@ -12,6 +12,7 @@ cMainGame::cMainGame()
 	: m_pCubePC(NULL)
 	, m_pCamera(NULL)
 	, m_pGrid(NULL)
+	, m_pTexture(NULL)
 {	
 }
 
@@ -21,12 +22,30 @@ cMainGame::~cMainGame()
 	SAFE_DELETE(m_pCubePC);
 	SAFE_DELETE(m_pCamera);
 	SAFE_DELETE(m_pGrid);
+	SAFE_RELEASE(m_pTexture);
 
 	g_pDeviceManager->Destroy();
 }
 
 void cMainGame::Setup()
 {
+	//texture setting
+	{
+		D3DXCreateTextureFromFile(g_pD3DDevice, "steam.png", &m_pTexture);
+		ST_PT_VERTEX v;
+		v.p = D3DXVECTOR3(0, 0, 0);
+		v.t = D3DXVECTOR2(0, 1.0f);
+		m_vecVertex.push_back(v);
+
+		v.p = D3DXVECTOR3(0, 1, 0);
+		v.t = D3DXVECTOR2(0, 0.5f);
+		m_vecVertex.push_back(v);
+
+		v.p = D3DXVECTOR3(1, 0, 0);
+		v.t = D3DXVECTOR2(1, 1);
+		m_vecVertex.push_back(v);
+	}
+
 	m_pCubePC = new cCubePC;
 	m_pCubePC->Setup();
 
@@ -66,6 +85,18 @@ void cMainGame::Render()
 		if (m_pPyramid) m_pPyramid->Render();
 
 		if (m_pCubeMan) m_pCubeMan->Render();
+	}
+
+	//texture test
+	{
+		D3DXMATRIXA16 matWorld;
+		D3DXMatrixIdentity(&matWorld);
+		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+		g_pD3DDevice->SetTexture(0, m_pTexture);
+		g_pD3DDevice->SetFVF(ST_PT_VERTEX::FVF);
+		g_pD3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, m_vecVertex.size() / 3, &m_vecVertex[0], sizeof(ST_PT_VERTEX));
+
+		g_pD3DDevice->SetTexture(0, NULL);
 	}
 
 	g_pD3DDevice->EndScene();

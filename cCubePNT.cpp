@@ -89,41 +89,42 @@ void cCubePNT::Setup()
 */
 
 	ST_PNT_VERTEX v;
+	//µÞ¸é
 	v.p = D3DXVECTOR3(-0.5f, -0.5f, -0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(-0.5f, 0.5f, -0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0.5f, 0.5f, -0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(-0.5f, -0.5f, -0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0.5f, 0.5f, -0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0.5f, -0.5f, -0.5f);	m_vecVertex.push_back(v);
-
+	//¿ìÃø¸é
 	v.p = D3DXVECTOR3(0.5f, -0.5f, -0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0.5f, 0.5f, -0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0.5f, 0.5f, 0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0.5f, -0.5f, -0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0.5f, 0.5f, 0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0.5f, -0.5f, 0.5f);	m_vecVertex.push_back(v);
-
+	//ÁÂÃø¸é
 	v.p = D3DXVECTOR3(-0.5f, -0.5f, 0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(-0.5f, 0.5f, 0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(-0.5f, 0.5f, -0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(-0.5f, -0.5f, 0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(-0.5f, 0.5f, -0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(-0.5f, -0.5f, -0.5f);	m_vecVertex.push_back(v);
-
+	//¾Õ¸é
 	v.p = D3DXVECTOR3(0.5f, -0.5f, 0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0.5f, 0.5f, 0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(-0.5f, 0.5f, 0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0.5f, -0.5f, 0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(-0.5f, 0.5f, 0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(-0.5f, -0.5f, 0.5f);	m_vecVertex.push_back(v);
-
+	//À­¸é
 	v.p = D3DXVECTOR3(-0.5f, 0.5f, -0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(-0.5f, 0.5f, 0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0.5f, 0.5f, 0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(-0.5f, 0.5f, -0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0.5f, 0.5f, 0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0.5f, 0.5f, -0.5f);	m_vecVertex.push_back(v);
-
+	//¹Ø¸é
 	v.p = D3DXVECTOR3(0.5f, -0.5f, -0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0.5f, -0.5f, 0.5f);	m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(-0.5f, -0.5f, 0.5f);	m_vecVertex.push_back(v);
@@ -143,6 +144,12 @@ void cCubePNT::Setup()
 		m_vecVertex[i].n = n;
 		m_vecVertex[i+1].n = n;
 		m_vecVertex[i+2].n = n;
+	}
+
+	for (int i = 0; i < 36; i++)
+	{
+		m_vecVertex[i].t.x = 0;
+		m_vecVertex[i].t.y = 0;
 	}
 }
 

@@ -11,6 +11,7 @@
 
 cCubeMan::cCubeMan()
 	: m_pRoot(NULL)
+	, m_pTexture(NULL)
 {
 	m_pRoot = new cCubeNode;
 }
@@ -19,6 +20,7 @@ cCubeMan::cCubeMan()
 cCubeMan::~cCubeMan()
 {
 	if (m_pRoot) m_pRoot->Destroy();
+	SAFE_RELEASE(m_pTexture);
 }
 
 void cCubeMan::Setup()
@@ -59,6 +61,9 @@ void cCubeMan::Setup()
 	part = new cRLeg;
 	part->Setup();
 	m_pRoot->AddChild(part);
+
+	//texture
+	D3DXCreateTextureFromFile(g_pD3DDevice, "batman.png", &m_pTexture);
 }
 
 void cCubeMan::Update()
@@ -76,5 +81,9 @@ void cCubeMan::Render()
 	g_pD3DDevice->SetMaterial(&m_stMtl);
 	//
 
+	g_pD3DDevice->SetTexture(0, m_pTexture);
+
 	if (m_pRoot) m_pRoot->Render();
+
+	g_pD3DDevice->SetTexture(0, NULL);
 }

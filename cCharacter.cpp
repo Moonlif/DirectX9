@@ -30,17 +30,18 @@ void cCharacter::Update()
 	if (m_jumpTime > 0)
 	{
 		m_jumpTime--;
-		m_vPosition.y += 0.3f;
+		m_vPosition.y += 0.2f;
 	}
 
 	m_fGravity += GRAVITY_ACCEL;
+	if (m_fGravity > 0.50f) m_fGravity = 0.50f;
 	m_vPosition.y -= m_fGravity;
 	if (m_vPosition.y < 0) m_vPosition.y = 0.0f;
 
 	//jump key (spcae bar)
 	if (GetKeyState(VK_SPACE) & 0x8000)
 	{
-		if (m_IsJumping == false) m_jumpTime = 10;
+		if (m_IsJumping == false) m_jumpTime = 30;
 	}
 
 	//box direction rotation (A,D)

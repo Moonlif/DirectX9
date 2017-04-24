@@ -15,11 +15,14 @@ public:
 
 private:
 	cCubePC*		m_pCubePC;
+	cCubeMan*		m_pCubeMan;
 	cCamera*		m_pCamera;
 	cGrid*			m_pGrid;
 	cPyramid*		m_pPyramid;
 
-	cCubeMan*		m_pCubeMan;
+	//texture setting
+	LPDIRECT3DTEXTURE9 m_pTexture;
+	std::vector<ST_PT_VERTEX> m_vecVertex;
 
 public:
 	void Setup();

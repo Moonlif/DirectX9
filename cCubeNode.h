@@ -20,6 +20,8 @@ protected:
 
 	bool m_Isfront;
 
+	LPDIRECT3DTEXTURE9 m_pTexture;
+
 public:
 	virtual ~cCubeNode();
 
