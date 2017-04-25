@@ -25,13 +25,7 @@ cCubeMan::~cCubeMan()
 
 void cCubeMan::Setup()
 {
-	//teacher code
-	//material setting
-	ZeroMemory(&m_stMtl, sizeof(D3DMATERIAL9));
-	m_stMtl.Diffuse = D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f);
-	m_stMtl.Ambient = D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f);
-	m_stMtl.Specular = D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f);
-	//
+	Set_Material();
 
 	m_pRoot->SetParentWorldTM(&m_matWorld);
 	m_pRoot->SetIsMoving(&m_IsMoving);
@@ -86,4 +80,15 @@ void cCubeMan::Render()
 	if (m_pRoot) m_pRoot->Render();
 
 	g_pD3DDevice->SetTexture(0, NULL);
+}
+
+void cCubeMan::Set_Material()
+{
+	//standard setting
+	ZeroMemory(&m_stMtl, sizeof(D3DMATERIAL9));
+	m_stMtl.Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
+	m_stMtl.Ambient = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
+	m_stMtl.Specular = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
+	m_stMtl.Emissive = D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f);
+	m_stMtl.Power = 2.0f;
 }
