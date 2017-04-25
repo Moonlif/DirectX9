@@ -87,6 +87,7 @@ void cMainGame::Setup()
 	m_pPyramid->Setup();
 
 	//g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, false);
+	//g_pD3DDevice->SetRenderState(D3DRS_SPECULARENABLE, true);
 
 	Set_Light();
 }
