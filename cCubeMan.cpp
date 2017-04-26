@@ -118,17 +118,12 @@ void cCubeMan::MoveToDest()
 
 	if (m_IsLerp == false)
 	{
-		int startIdx, destIdx;
-		startIdx = m_nDestIndex;
-		destIdx = (startIdx + 1) % 6;
-
+		int destIdx = (m_nDestIndex + 1) % 6;
 		D3DXVECTOR3 destPos = m_vDest[destIdx];
-		D3DXVECTOR3 startPos = m_vDest[startIdx];
 
-		D3DXVECTOR3 dir = destPos - startPos;
+		D3DXVECTOR3 dir = destPos - m_vPosition;
 		D3DXVec3Normalize(&dir, &dir);
 		D3DXVECTOR3 zAxis(0, 0, 1);
-
 		m_vRotation.y = -acosf(D3DXVec3Dot(&dir, &zAxis));
 		if (dir.x > 0) m_vRotation.y *= -1;
 
@@ -136,25 +131,30 @@ void cCubeMan::MoveToDest()
 		if (D3DXVec3Length(&distance) < EPSILON)
 		{
 			m_vPosition = destPos;
-			m_nDestIndex = (m_nDestIndex + 1) % 6;
+			m_nDestIndex = destIdx;
 		}
 	}
 
 	else if (m_IsLerp == true)
 	{
-		int startIdx, viaIdx, destIdx;
-		startIdx = m_nDestIndex;
-		viaIdx = (startIdx + 1) % 6;
+		int viaIdx, destIdx;
+		viaIdx = (m_nDestIndex + 1) % 6;
 		destIdx = (viaIdx + 1) % 6;
-
 		D3DXVECTOR3 destPos = m_vDest[destIdx];
 		D3DXVECTOR3 viaPos = m_vDest[viaIdx];
-		D3DXVECTOR3 startPos = m_vDest[startIdx];
 
-		D3DXVECTOR3 dir = destPos - startPos;
+		D3DXVECTOR3 viaToDest = destPos - viaPos;
+		m_vViaPos = m_vViaPos + viaToDest * 0.02f;
+		if (D3DXVec3Length(&m_vViaPos) > D3DXVec3Length(&viaToDest))
+		{
+			m_vViaPos = viaToDest;
+		}
+
+		D3DXVECTOR3 target = viaPos + m_vViaPos;
+
+		D3DXVECTOR3 dir = target - m_vPosition;
 		D3DXVec3Normalize(&dir, &dir);
 		D3DXVECTOR3 zAxis(0, 0, 1);
-
 		m_vRotation.y = -acosf(D3DXVec3Dot(&dir, &zAxis));
 		if (dir.x > 0) m_vRotation.y *= -1;
 
@@ -162,7 +162,8 @@ void cCubeMan::MoveToDest()
 		if (D3DXVec3Length(&distance) < EPSILON)
 		{
 			m_vPosition = destPos;
-			m_nDestIndex = (m_nDestIndex + 1) % 6;
+			m_nDestIndex = destIdx;
+			m_vViaPos = D3DXVECTOR3(0, 0, 0);
 		}
 	}
 }

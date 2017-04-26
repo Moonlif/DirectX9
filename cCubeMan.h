@@ -24,5 +24,6 @@ private:
 	bool m_IsLerp;
 	int m_nDestIndex;
 	D3DXVECTOR3 m_vDest[6];
+	D3DXVECTOR3 m_vViaPos;
 };
 
