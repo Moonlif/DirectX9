@@ -9,9 +9,13 @@
 #include "cLLeg.h"
 #include "cRLeg.h"
 
+#define EPSILON 0.1f
+
 cCubeMan::cCubeMan()
 	: m_pRoot(NULL)
 	, m_pTexture(NULL)
+	, m_IsLerp(false)
+	, m_nDestIndex(0)
 {
 	m_pRoot = new cCubeNode;
 }
@@ -23,7 +27,7 @@ cCubeMan::~cCubeMan()
 	SAFE_RELEASE(m_pTexture);
 }
 
-void cCubeMan::Setup()
+void cCubeMan::Setup(bool isLerp)
 {
 	Set_Material();
 
@@ -58,11 +62,26 @@ void cCubeMan::Setup()
 
 	//texture
 	D3DXCreateTextureFromFile(g_pD3DDevice, "batman.png", &m_pTexture);
+
+	m_vPosition = D3DXVECTOR3(5, 0, 0);
+
+	//destination setting
+	m_vDest[0] = D3DXVECTOR3(5.0f, 0, 0);
+	m_vDest[1] = D3DXVECTOR3(2.5f, 0, 4.25f);
+	m_vDest[2] = D3DXVECTOR3(-2.5f, 0, 4.25f);
+	m_vDest[3] = D3DXVECTOR3(-5.0f, 0, 0);
+	m_vDest[4] = D3DXVECTOR3(-2.5f, 0, -4.25f);
+	m_vDest[5] = D3DXVECTOR3(2.5f, 0, -4.25f);
+
+	m_IsLerp = isLerp;
 }
 
 void cCubeMan::Update()
 {
+	MoveToDest();
+
 	cCharacter::Update();
+	m_IsMoving = true;
 
 	if (m_pRoot) m_pRoot->Update();
 }
@@ -91,4 +110,59 @@ void cCubeMan::Set_Material()
 	m_stMtl.Specular = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 	//m_stMtl.Emissive = D3DXCOLOR(0.5f, 0.5f, 0.0f, 1.0f);
 	m_stMtl.Power = 2.0f;
+}
+
+void cCubeMan::MoveToDest()
+{
+	m_vPosition = m_vPosition + m_vDirection * 0.1f;
+
+	if (m_IsLerp == false)
+	{
+		int startIdx, destIdx;
+		startIdx = m_nDestIndex;
+		destIdx = (startIdx + 1) % 6;
+
+		D3DXVECTOR3 destPos = m_vDest[destIdx];
+		D3DXVECTOR3 startPos = m_vDest[startIdx];
+
+		D3DXVECTOR3 dir = destPos - startPos;
+		D3DXVec3Normalize(&dir, &dir);
+		D3DXVECTOR3 zAxis(0, 0, 1);
+
+		m_vRotation.y = -acosf(D3DXVec3Dot(&dir, &zAxis));
+		if (dir.x > 0) m_vRotation.y *= -1;
+
+		D3DXVECTOR3 distance = destPos - m_vPosition;
+		if (D3DXVec3Length(&distance) < EPSILON)
+		{
+			m_vPosition = destPos;
+			m_nDestIndex = (m_nDestIndex + 1) % 6;
+		}
+	}
+
+	else if (m_IsLerp == true)
+	{
+		int startIdx, viaIdx, destIdx;
+		startIdx = m_nDestIndex;
+		viaIdx = (startIdx + 1) % 6;
+		destIdx = (viaIdx + 1) % 6;
+
+		D3DXVECTOR3 destPos = m_vDest[destIdx];
+		D3DXVECTOR3 viaPos = m_vDest[viaIdx];
+		D3DXVECTOR3 startPos = m_vDest[startIdx];
+
+		D3DXVECTOR3 dir = destPos - startPos;
+		D3DXVec3Normalize(&dir, &dir);
+		D3DXVECTOR3 zAxis(0, 0, 1);
+
+		m_vRotation.y = -acosf(D3DXVec3Dot(&dir, &zAxis));
+		if (dir.x > 0) m_vRotation.y *= -1;
+
+		D3DXVECTOR3 distance = destPos - m_vPosition;
+		if (D3DXVec3Length(&distance) < EPSILON)
+		{
+			m_vPosition = destPos;
+			m_nDestIndex = (m_nDestIndex + 1) % 6;
+		}
+	}
 }

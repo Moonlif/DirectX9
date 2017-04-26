@@ -81,6 +81,7 @@ void cCharacter::Update()
 	//
 	m_vDirection = D3DXVECTOR3(0, 0, 1);
 	D3DXVec3TransformNormal(&m_vDirection, &m_vDirection, &matRY);
+	D3DXVec3Normalize(&m_vDirection, &m_vDirection);
 
 	if (m_vPosition.y > 0) m_IsJumping = true;
 	else

@@ -16,24 +16,44 @@ void cGrid::Setup(int xAxisCount, int zAxisCount, float interval)
 	ST_PC_VERTEX v;
 	v.c = D3DCOLOR_XRGB(255, 255, 255);
 
-	//x축
-	for (int i = 1; i <= xAxisCount / 2; ++i)
-	{
-		v.p = D3DXVECTOR3((zAxisCount / 2) * interval, 0, i * interval); m_vecVertex.push_back(v);
-		v.p = D3DXVECTOR3(-(zAxisCount / 2) * interval, 0, i * interval); m_vecVertex.push_back(v);
+	//octagon
+	v.p = D3DXVECTOR3(5, 0, 0);	m_vecVertex.push_back(v);
+	v.p = D3DXVECTOR3(2.5f, 0, 2.5*1.7f); m_vecVertex.push_back(v);
 
-		v.p = D3DXVECTOR3((zAxisCount / 2) * interval, 0, -i * interval); m_vecVertex.push_back(v);
-		v.p = D3DXVECTOR3(-(zAxisCount / 2) * interval, 0, -i * interval); m_vecVertex.push_back(v);
-	}
-	//z축
-	for (int i = 1; i <= xAxisCount / 2; ++i)
-	{
-		v.p = D3DXVECTOR3(i * interval, 0, (xAxisCount / 2) * interval); m_vecVertex.push_back(v);
-		v.p = D3DXVECTOR3(i * interval, 0, -(xAxisCount / 2) * interval); m_vecVertex.push_back(v);
+	v.p = D3DXVECTOR3(2.5f, 0, 2.5*1.7f); m_vecVertex.push_back(v);
+	v.p = D3DXVECTOR3(-2.5f, 0, 2.5*1.7f); m_vecVertex.push_back(v);
 
-		v.p = D3DXVECTOR3(-i * interval, 0, (xAxisCount / 2) * interval); m_vecVertex.push_back(v);
-		v.p = D3DXVECTOR3(-i * interval, 0, -(xAxisCount / 2) * interval); m_vecVertex.push_back(v);
-	}
+	v.p = D3DXVECTOR3(-2.5f, 0, 2.5*1.7f); m_vecVertex.push_back(v);
+	v.p = D3DXVECTOR3(-5, 0, 0); m_vecVertex.push_back(v);
+
+	v.p = D3DXVECTOR3(-5, 0, 0); m_vecVertex.push_back(v);
+	v.p = D3DXVECTOR3(-2.5f, 0, -2.5*1.7f); m_vecVertex.push_back(v);
+
+	v.p = D3DXVECTOR3(-2.5f, 0, -2.5*1.7f); m_vecVertex.push_back(v);
+	v.p = D3DXVECTOR3(2.5f, 0, -2.5*1.7f); m_vecVertex.push_back(v);
+
+	v.p = D3DXVECTOR3(2.5f, 0, -2.5*1.7f); m_vecVertex.push_back(v);
+	v.p = D3DXVECTOR3(5, 0, 0);	m_vecVertex.push_back(v);
+
+
+	////x축
+	//for (int i = 1; i <= xAxisCount / 2; ++i)
+	//{
+	//	v.p = D3DXVECTOR3((zAxisCount / 2) * interval, 0, i * interval); m_vecVertex.push_back(v);
+	//	v.p = D3DXVECTOR3(-(zAxisCount / 2) * interval, 0, i * interval); m_vecVertex.push_back(v);
+
+	//	v.p = D3DXVECTOR3((zAxisCount / 2) * interval, 0, -i * interval); m_vecVertex.push_back(v);
+	//	v.p = D3DXVECTOR3(-(zAxisCount / 2) * interval, 0, -i * interval); m_vecVertex.push_back(v);
+	//}
+	////z축
+	//for (int i = 1; i <= xAxisCount / 2; ++i)
+	//{
+	//	v.p = D3DXVECTOR3(i * interval, 0, (xAxisCount / 2) * interval); m_vecVertex.push_back(v);
+	//	v.p = D3DXVECTOR3(i * interval, 0, -(xAxisCount / 2) * interval); m_vecVertex.push_back(v);
+
+	//	v.p = D3DXVECTOR3(-i * interval, 0, (xAxisCount / 2) * interval); m_vecVertex.push_back(v);
+	//	v.p = D3DXVECTOR3(-i * interval, 0, -(xAxisCount / 2) * interval); m_vecVertex.push_back(v);
+	//}
 
 	//x축
 	v.c = D3DCOLOR_XRGB(255, 0, 0);
