@@ -6,6 +6,7 @@ class cGrid;
 class cPyramid;
 
 class cCubeMan;
+class cObjLoader;
 
 class cMainGame
 {
@@ -20,6 +21,7 @@ private:
 	cCamera*		m_pCamera;
 	cGrid*			m_pGrid;
 	cPyramid*		m_pPyramid;
+	cObjLoader*		m_pObjLoader;
 
 	D3DXVECTOR3		m_vCamTarget;
 	//texture setting

@@ -63,7 +63,7 @@ void cCubeMan::Setup(bool isLerp)
 	//texture
 	D3DXCreateTextureFromFile(g_pD3DDevice, "batman.png", &m_pTexture);
 
-	m_vPosition = D3DXVECTOR3(5, 0, 0);
+	//m_vPosition = D3DXVECTOR3(5, 0, 0);
 
 	//destination setting
 	m_vDest[0] = D3DXVECTOR3(5.0f, 0, 0);
@@ -78,10 +78,10 @@ void cCubeMan::Setup(bool isLerp)
 
 void cCubeMan::Update()
 {
-	MoveToDest();
+	//MoveToDest();
 
 	cCharacter::Update();
-	m_IsMoving = true;
+	//m_IsMoving = true;
 
 	if (m_pRoot) m_pRoot->Update();
 }
@@ -144,6 +144,12 @@ void cCubeMan::MoveToDest()
 		D3DXVECTOR3 viaPos = m_vDest[viaIdx];
 
 		D3DXVECTOR3 viaToDest = destPos - viaPos;
+
+		//float length = D3DXVec3Length(&viaToDest);
+		//int count = 10;
+		//float dLength = length / count;
+		//m_vSavePos;
+
 		m_vViaPos = m_vViaPos + viaToDest * 0.02f;
 		if (D3DXVec3Length(&m_vViaPos) > D3DXVec3Length(&viaToDest))
 		{
@@ -166,4 +172,7 @@ void cCubeMan::MoveToDest()
 			m_vViaPos = D3DXVECTOR3(0, 0, 0);
 		}
 	}
+
+	//베지어 곡선
+
 }

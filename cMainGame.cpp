@@ -7,6 +7,7 @@
 #include "cPyramid.h"
 
 #include "cCubeMan.h"
+#include "cObjLoader.h"
 
 cMainGame::cMainGame()
 	: m_pCubePC(NULL)
@@ -14,7 +15,8 @@ cMainGame::cMainGame()
 	, m_pGrid(NULL)
 	, m_pTexture(NULL)
 	, m_pCubeMan(NULL)
-	, m_pCubeMan2(NULL)
+	, m_pObjLoader(NULL)
+	//, m_pCubeMan2(NULL)
 {	
 }
 
@@ -27,7 +29,8 @@ cMainGame::~cMainGame()
 	SAFE_RELEASE(m_pTexture);
 
 	SAFE_DELETE(m_pCubeMan);
-	SAFE_DELETE(m_pCubeMan2);
+	SAFE_DELETE(m_pObjLoader);
+	//SAFE_DELETE(m_pCubeMan2);
 
 	g_pDeviceManager->Destroy();
 }
@@ -81,13 +84,16 @@ void cMainGame::Setup()
 	m_pCubeMan = new cCubeMan;
 	m_pCubeMan->Setup(false);
 
-	m_pCubeMan2 = new cCubeMan;
-	m_pCubeMan2->Setup(true);
+	m_pObjLoader = new cObjLoader;
+	m_pObjLoader->LoadObj();
+
+	//m_pCubeMan2 = new cCubeMan;
+	//m_pCubeMan2->Setup(true);
 
 	m_pCamera = new cCamera;
 	//m_pCamera->Setup(&m_pCubePC->GetPosition());
-	//m_pCamera->Setup(&m_pCubeMan->GetPosition());
-	m_pCamera->Setup(&m_vCamTarget);
+	m_pCamera->Setup(&m_pCubeMan->GetPosition());
+	//m_pCamera->Setup(&m_vCamTarget);
 
 	m_pGrid = new cGrid;
 	m_pGrid->Setup(20, 20, 1.0f);
@@ -105,7 +111,7 @@ void cMainGame::Update()
 {
 	//if (m_pCubePC) m_pCubePC->Update();
 	if (m_pCubeMan) m_pCubeMan->Update();
-	if (m_pCubeMan2) m_pCubeMan2->Update();
+	//if (m_pCubeMan2) m_pCubeMan2->Update();
 	if (m_pCamera) m_pCamera->Update();
 }
 
@@ -120,7 +126,8 @@ void cMainGame::Render()
 		if (m_pPyramid) m_pPyramid->Render();
 
 		if (m_pCubeMan) m_pCubeMan->Render();
-		if (m_pCubeMan2) m_pCubeMan2->Render();
+		if (m_pObjLoader) m_pObjLoader->Render();
+		//if (m_pCubeMan2) m_pCubeMan2->Render();
 	}
 
 	//texture test
