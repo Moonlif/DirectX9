@@ -21,10 +21,12 @@ public:
 	void MoveToDest();
 
 private:
+	//bezier curve
 	bool m_IsLerp;
 	int m_nDestIndex;
 	D3DXVECTOR3 m_vDest[6];
-	D3DXVECTOR3 m_vViaPos;
-	D3DXVECTOR3 m_vSavePos;
+	/*D3DXVECTOR3 m_vViaPos;*/
+	//D3DXVECTOR3 m_vSavePos;
+	float m_fDt;
 };
 

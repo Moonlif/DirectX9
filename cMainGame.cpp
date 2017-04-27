@@ -15,8 +15,8 @@ cMainGame::cMainGame()
 	, m_pGrid(NULL)
 	, m_pTexture(NULL)
 	, m_pCubeMan(NULL)
+	, m_pCubeMan2(NULL)
 	, m_pObjLoader(NULL)
-	//, m_pCubeMan2(NULL)
 {	
 }
 
@@ -29,8 +29,8 @@ cMainGame::~cMainGame()
 	SAFE_RELEASE(m_pTexture);
 
 	SAFE_DELETE(m_pCubeMan);
+	SAFE_DELETE(m_pCubeMan2);
 	SAFE_DELETE(m_pObjLoader);
-	//SAFE_DELETE(m_pCubeMan2);
 
 	g_pDeviceManager->Destroy();
 	g_pTextureManager->Destroy();
@@ -79,17 +79,17 @@ void cMainGame::Setup()
 		}
 	}
 
-	m_pCubePC = new cCubePC;
-	m_pCubePC->Setup();
+	//m_pCubePC = new cCubePC;
+	//m_pCubePC->Setup();
 
 	m_pCubeMan = new cCubeMan;
 	m_pCubeMan->Setup(false);
 
-	m_pObjLoader = new cObjLoader;
-	m_pObjLoader->LoadObj("objects/map.obj");
-
 	//m_pCubeMan2 = new cCubeMan;
 	//m_pCubeMan2->Setup(true);
+
+	m_pObjLoader = new cObjLoader;
+	m_pObjLoader->LoadObj("objects/map.obj");
 
 	m_pCamera = new cCamera;
 	//m_pCamera->Setup(&m_pCubePC->GetPosition());
@@ -101,9 +101,6 @@ void cMainGame::Setup()
 
 	m_pPyramid = new cPyramid;
 	m_pPyramid->Setup();
-
-	//g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, false);
-	//g_pD3DDevice->SetRenderState(D3DRS_SPECULARENABLE, true);
 
 	Set_Light();
 }
@@ -127,8 +124,9 @@ void cMainGame::Render()
 		if (m_pPyramid) m_pPyramid->Render();
 
 		if (m_pCubeMan) m_pCubeMan->Render();
-		if (m_pObjLoader) m_pObjLoader->Render();
 		//if (m_pCubeMan2) m_pCubeMan2->Render();
+
+		if (m_pObjLoader) m_pObjLoader->Render();
 	}
 
 	//texture test render
@@ -154,6 +152,9 @@ void cMainGame::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 void cMainGame::Set_Light()
 {
+	//g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, false);
+	//g_pD3DDevice->SetRenderState(D3DRS_SPECULARENABLE, true);
+
 	D3DLIGHT9 stLight;
 	ZeroMemory(&stLight, sizeof(D3DLIGHT9));
 

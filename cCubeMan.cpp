@@ -63,7 +63,7 @@ void cCubeMan::Setup(bool isLerp)
 	//texture
 	D3DXCreateTextureFromFile(g_pD3DDevice, "batman.png", &m_pTexture);
 
-	//m_vPosition = D3DXVECTOR3(5, 0, 0);
+	m_vPosition = D3DXVECTOR3(5, 0, 0);
 
 	//destination setting
 	m_vDest[0] = D3DXVECTOR3(5.0f, 0, 0);
@@ -78,10 +78,8 @@ void cCubeMan::Setup(bool isLerp)
 
 void cCubeMan::Update()
 {
-	//MoveToDest();
-
 	cCharacter::Update();
-	//m_IsMoving = true;
+	//MoveToDest();
 
 	if (m_pRoot) m_pRoot->Update();
 }
@@ -115,6 +113,7 @@ void cCubeMan::Set_Material()
 void cCubeMan::MoveToDest()
 {
 	m_vPosition = m_vPosition + m_vDirection * 0.1f;
+	m_IsMoving = true;
 
 	if (m_IsLerp == false)
 	{
@@ -135,30 +134,32 @@ void cCubeMan::MoveToDest()
 		}
 	}
 
+	//bezier curve
 	else if (m_IsLerp == true)
 	{
 		int viaIdx, destIdx;
 		viaIdx = (m_nDestIndex + 1) % 6;
 		destIdx = (viaIdx + 1) % 6;
-		D3DXVECTOR3 destPos = m_vDest[destIdx];
+		D3DXVECTOR3 startPos = m_vDest[m_nDestIndex];
 		D3DXVECTOR3 viaPos = m_vDest[viaIdx];
+		D3DXVECTOR3 destPos = m_vDest[destIdx];
 
+		D3DXVECTOR3 startToVia = viaPos - startPos;
 		D3DXVECTOR3 viaToDest = destPos - viaPos;
 
-		//float length = D3DXVec3Length(&viaToDest);
-		//int count = 10;
-		//float dLength = length / count;
-		//m_vSavePos;
+		//internal division point
+		D3DXVECTOR3 divisionS2V = startPos + startToVia * m_fDt;
+		D3DXVECTOR3 divisionV2D = viaPos + viaToDest * m_fDt;
+		D3DXVECTOR3 divisionSV2VD = divisionS2V + (divisionV2D - divisionS2V) * m_fDt;
 
-		m_vViaPos = m_vViaPos + viaToDest * 0.02f;
-		if (D3DXVec3Length(&m_vViaPos) > D3DXVec3Length(&viaToDest))
+		D3DXVECTOR3 dToViaDestination = divisionSV2VD - m_vPosition;
+		if (D3DXVec3Length(&dToViaDestination) < EPSILON)
 		{
-			m_vViaPos = viaToDest;
+			m_fDt += 0.1f;
+			if (m_fDt > 1.0f) m_fDt = 1.0f;
 		}
 
-		D3DXVECTOR3 target = viaPos + m_vViaPos;
-
-		D3DXVECTOR3 dir = target - m_vPosition;
+		D3DXVECTOR3 dir = divisionSV2VD - m_vPosition;
 		D3DXVec3Normalize(&dir, &dir);
 		D3DXVECTOR3 zAxis(0, 0, 1);
 		m_vRotation.y = -acosf(D3DXVec3Dot(&dir, &zAxis));
@@ -169,10 +170,7 @@ void cCubeMan::MoveToDest()
 		{
 			m_vPosition = destPos;
 			m_nDestIndex = destIdx;
-			m_vViaPos = D3DXVECTOR3(0, 0, 0);
+			m_fDt = 0.1f;
 		}
 	}
-
-	//º£Áö¾î °î¼±
-
 }
