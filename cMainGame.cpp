@@ -33,11 +33,12 @@ cMainGame::~cMainGame()
 	//SAFE_DELETE(m_pCubeMan2);
 
 	g_pDeviceManager->Destroy();
+	g_pTextureManager->Destroy();
 }
 
 void cMainGame::Setup()
 {
-	//texture setting
+	//texture test setting
 	{
 		D3DXCreateTextureFromFile(g_pD3DDevice, "steam.png", &m_pTexture);
 		ST_PT_VERTEX v;
@@ -85,7 +86,7 @@ void cMainGame::Setup()
 	m_pCubeMan->Setup(false);
 
 	m_pObjLoader = new cObjLoader;
-	m_pObjLoader->LoadObj();
+	m_pObjLoader->LoadObj("objects/map.obj");
 
 	//m_pCubeMan2 = new cCubeMan;
 	//m_pCubeMan2->Setup(true);
@@ -130,7 +131,7 @@ void cMainGame::Render()
 		//if (m_pCubeMan2) m_pCubeMan2->Render();
 	}
 
-	//texture test
+	//texture test render
 	{
 		//D3DXMATRIXA16 matWorld;
 		//D3DXMatrixIdentity(&matWorld);
@@ -169,6 +170,7 @@ void cMainGame::Set_Light()
 	g_pD3DDevice->SetLight(0, &stLight);
 	g_pD3DDevice->LightEnable(0, true);
 
+	//Light test for each type
 	/*
 	D3DLIGHT9 stLight;
 	ZeroMemory(&stLight, sizeof(D3DLIGHT9));

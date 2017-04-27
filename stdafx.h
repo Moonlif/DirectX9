@@ -80,3 +80,4 @@ struct ST_PT_VERTEX
 
 //singletone
 #include "cDeviceManager.h"
+#include "cTextureManager.h"

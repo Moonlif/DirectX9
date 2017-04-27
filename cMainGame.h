@@ -24,7 +24,8 @@ private:
 	cObjLoader*		m_pObjLoader;
 
 	D3DXVECTOR3		m_vCamTarget;
-	//texture setting
+	
+	//texture test
 	LPDIRECT3DTEXTURE9 m_pTexture;
 	std::vector<ST_PT_VERTEX> m_vecVertex;
 

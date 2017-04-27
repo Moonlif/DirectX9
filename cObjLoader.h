@@ -1,24 +1,38 @@
 #pragma once
 
+class cObject;
+
+struct MtlTex
+{
+	D3DMATERIAL9 mtl;
+	string texName;
+};
+
 class cObjLoader
 {
 public:
 	cObjLoader();
 	~cObjLoader();
 
-	void LoadObj();
+	void LoadObj(const char* fileName);
 	void LoadMaterial(string adress);
-	void LoadTexture(string adress);
 	void Render();
 
 private:
-	std::vector<D3DXVECTOR3> m_vVertices;
-	std::vector<D3DXVECTOR2> m_vTextureVertices;
-	std::vector<D3DXVECTOR3> m_vVertexNormals;
+	//LoadObj
+	std::vector<D3DXVECTOR3> m_vecVertices;
+	std::vector<D3DXVECTOR2> m_vecTextureVertices;
+	std::vector<D3DXVECTOR3> m_vecVertexNormals;
 
+	//LoadMaterial
+	std::map<string, MtlTex> m_mapMaterial;
+
+	//MakeObj
+	string m_sObjName;
+	string m_sMtlName;
+	string m_sTextureName;
 	std::vector<ST_PNT_VERTEX> m_vecVertex;
 
-	D3DMATERIAL9 m_stMtl;
-	LPDIRECT3DTEXTURE9 m_pTexture;
+	//group
+	std::vector<cObject> m_vecObj;
 };
-
