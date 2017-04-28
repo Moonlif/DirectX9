@@ -36,6 +36,7 @@ using namespace std;
 extern HWND g_hWnd;
 #define SAFE_RELEASE(p) {if(p) p->Release(); p = NULL;}
 #define SAFE_DELETE(p) {if(p) delete p; p = NULL;}
+#define SAFE_ADD_REF(p) {if(p) p->AddRef();}
 
 #define SINGLETONE(class_name) \
 			private: \
@@ -52,6 +53,22 @@ extern HWND g_hWnd;
 private: varType varName;\
 public: inline varType Get##funName(void) const { return varName; }\
 public: inline void Set##funName(varType var) { varName = var; }
+
+#define SYNTHESIZE_PASS_BY_REF(varType, varName, funName)\
+private: varType varName;\
+public: inline varType& Get##funName(void) { return varName; }\
+public: inline void Set##funName(varType& var) { varName = var; }
+
+#define SYNTHESIZE_ADD_REF(varType, varName, funName)\
+private: varType varName;\
+public: virtual varType Get##funName(void) const { return varName; }\
+public: virtual void Set##funName(varType var) {\
+		if (varName != var) {\
+				SAFE_ADD_REF(var);\
+				SAFE_RELEASE(varName);\
+				varName = var;\
+		}\
+}
 
 struct ST_PC_VERTEX
 {
@@ -78,6 +95,8 @@ struct ST_PT_VERTEX
 	enum { FVF = D3DFVF_XYZ | D3DFVF_TEX1 };
 };
 
+#include "cObject.h"
 //singletone
 #include "cDeviceManager.h"
 #include "cTextureManager.h"
+#include "cObjectManager.h"

@@ -1,16 +1,14 @@
 #pragma once
+#include "cObject.h"
 
-class cMtlTex
+class cMtlTex : public cObject
 {
 public:
 	cMtlTex();
 	~cMtlTex();
 
-protected:
-	D3DMATERIAL9 m_stMtl;
-	string	m_sTextureName;
-
 public:
-	virtual void Render();
+	SYNTHESIZE_PASS_BY_REF(D3DMATERIAL9, m_stMtl, Material);
+	SYNTHESIZE_ADD_REF(LPDIRECT3DTEXTURE9, m_pTexture, Texture);
 };
 

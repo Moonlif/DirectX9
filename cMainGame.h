@@ -6,6 +6,8 @@ class cGrid;
 class cPyramid;
 
 class cCubeMan;
+
+class cGroup;
 class cObjLoader;
 
 class cMainGame
@@ -21,10 +23,12 @@ private:
 	cCamera*		m_pCamera;
 	cGrid*			m_pGrid;
 	cPyramid*		m_pPyramid;
-	cObjLoader*		m_pObjLoader;
 
 	D3DXVECTOR3		m_vCamTarget;
 	
+	vector<cGroup*> m_vecGroup;
+	cObjLoader* m_pObjLoader;
+
 	//texture test
 	LPDIRECT3DTEXTURE9 m_pTexture;
 	std::vector<ST_PT_VERTEX> m_vecVertex;

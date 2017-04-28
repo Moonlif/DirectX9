@@ -4,7 +4,6 @@
 
 cTextureManager::cTextureManager()
 {
-	m_mTexture.clear();
 }
 
 
@@ -12,37 +11,25 @@ cTextureManager::~cTextureManager()
 {
 }
 
-
-void cTextureManager::AddTexture(string name, LPDIRECT3DTEXTURE9 texture)
+LPDIRECT3DTEXTURE9 cTextureManager::GetTexture(char * szFullPath)
 {
-	if (FindTexture(name) == NULL)
-		m_mTexture.insert(make_pair(name, texture));
-}
-
-void cTextureManager::DeleteTexture(string name, LPDIRECT3DTEXTURE9 texture)
-{
-	if (FindTexture(name) != NULL)
-		m_mTexture.erase(name);
-}
-
-LPDIRECT3DTEXTURE9 cTextureManager::FindTexture(string name)
-{
-	map<string, LPDIRECT3DTEXTURE9>::iterator iter;
-	iter = m_mTexture.find(name);
-	if (iter != m_mTexture.end())
+	if (m_mapTexture.find(szFullPath) != m_mapTexture.end())
 	{
-		return iter->second;
+		D3DXCreateTextureFromFile(g_pD3DDevice, szFullPath, &m_mapTexture[szFullPath]);
 	}
-	
-	return NULL;
+	return m_mapTexture[szFullPath];
+}
+
+LPDIRECT3DTEXTURE9 cTextureManager::GetTexture(std::string & sFullPath)
+{
+	return GetTexture((char*)sFullPath.c_str());
 }
 
 void cTextureManager::Destroy()
 {
-	map<string, LPDIRECT3DTEXTURE9>::iterator iter;
-	for (iter = m_mTexture.begin(); iter != m_mTexture.end(); ++iter)
+	for each(auto it in m_mapTexture)
 	{
-		SAFE_RELEASE(iter->second);
+		SAFE_RELEASE(it.second);
 	}
-	m_mTexture.clear();
+	m_mapTexture.clear();
 }

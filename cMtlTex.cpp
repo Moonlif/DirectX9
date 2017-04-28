@@ -3,6 +3,7 @@
 
 
 cMtlTex::cMtlTex()
+	: m_pTexture(NULL)
 {
 	ZeroMemory(&m_stMtl, sizeof(D3DMATERIAL9));
 }
@@ -10,10 +11,5 @@ cMtlTex::cMtlTex()
 
 cMtlTex::~cMtlTex()
 {
-}
-
-void cMtlTex::Render()
-{
-	g_pD3DDevice->SetMaterial(&m_stMtl);
-	g_pD3DDevice->SetTexture(0, g_pTextureManager->FindTexture(m_sTextureName));
+	SAFE_RELEASE(m_pTexture);
 }

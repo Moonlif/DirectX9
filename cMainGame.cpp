@@ -7,7 +7,15 @@
 #include "cPyramid.h"
 
 #include "cCubeMan.h"
+
+#include "cGroup.h"
 #include "cObjLoader.h"
+
+//D3DXIntersect(v0 v1 v2 vPos v3dir m v f);
+//f : ray쏴서 오브젝트까지의 거리
+//v3pos (x, 1000, z)
+//v3dir (0, -1 ,0)
+
 
 cMainGame::cMainGame()
 	: m_pCubePC(NULL)
@@ -30,7 +38,6 @@ cMainGame::~cMainGame()
 
 	SAFE_DELETE(m_pCubeMan);
 	SAFE_DELETE(m_pCubeMan2);
-	SAFE_DELETE(m_pObjLoader);
 
 	g_pDeviceManager->Destroy();
 	g_pTextureManager->Destroy();
@@ -40,43 +47,43 @@ void cMainGame::Setup()
 {
 	//texture test setting
 	{
-		D3DXCreateTextureFromFile(g_pD3DDevice, "steam.png", &m_pTexture);
-		ST_PT_VERTEX v;
-		v.p = D3DXVECTOR3(0, 0, 0);
-		v.t = D3DXVECTOR2(0, 1.0f);
-		m_vecVertex.push_back(v);
+		//D3DXCreateTextureFromFile(g_pD3DDevice, "steam.png", &m_pTexture);
+		//ST_PT_VERTEX v;
+		//v.p = D3DXVECTOR3(0, 0, 0);
+		//v.t = D3DXVECTOR2(0, 1.0f);
+		//m_vecVertex.push_back(v);
 
-		v.p = D3DXVECTOR3(0, 1, 0);
-		v.t = D3DXVECTOR2(0, 0.5f);
-		m_vecVertex.push_back(v);
+		//v.p = D3DXVECTOR3(0, 1, 0);
+		//v.t = D3DXVECTOR2(0, 0.5f);
+		//m_vecVertex.push_back(v);
 
-		v.p = D3DXVECTOR3(1, 0, 0);
-		v.t = D3DXVECTOR2(1, 1);
-		m_vecVertex.push_back(v);
+		//v.p = D3DXVECTOR3(1, 0, 0);
+		//v.t = D3DXVECTOR2(1, 1);
+		//m_vecVertex.push_back(v);
 
-		v.p = D3DXVECTOR3(0, 0, 0);
-		v.t = D3DXVECTOR2(0, 1.0f);
-		m_vecVertex.push_back(v);
+		//v.p = D3DXVECTOR3(0, 0, 0);
+		//v.t = D3DXVECTOR2(0, 1.0f);
+		//m_vecVertex.push_back(v);
 
-		v.p = D3DXVECTOR3(0, 1, 0);
-		v.t = D3DXVECTOR2(0, 0.5f);
-		m_vecVertex.push_back(v);
+		//v.p = D3DXVECTOR3(0, 1, 0);
+		//v.t = D3DXVECTOR2(0, 0.5f);
+		//m_vecVertex.push_back(v);
 
-		v.p = D3DXVECTOR3(1, 0, 0);
-		v.t = D3DXVECTOR2(1, 1);
-		m_vecVertex.push_back(v);
+		//v.p = D3DXVECTOR3(1, 0, 0);
+		//v.t = D3DXVECTOR2(1, 1);
+		//m_vecVertex.push_back(v);
 
-		D3DXMATRIXA16 matZTrans;
-		D3DXMatrixTranslation(&matZTrans, 0.0f, 0.0f, 3.0f);
-		for (int i = 0; i < 3; ++i)
-		{
-			D3DXVec3TransformCoord(&m_vecVertex[i].p, &m_vecVertex[i].p, &matZTrans);
-		}
-		D3DXMatrixTranslation(&matZTrans, -3.0f, 0.0f, 0.0f);
-		for (int i = 3; i < 6; ++i)
-		{
-			D3DXVec3TransformCoord(&m_vecVertex[i].p, &m_vecVertex[i].p, &matZTrans);
-		}
+		//D3DXMATRIXA16 matZTrans;
+		//D3DXMatrixTranslation(&matZTrans, 0.0f, 0.0f, 3.0f);
+		//for (int i = 0; i < 3; ++i)
+		//{
+		//	D3DXVec3TransformCoord(&m_vecVertex[i].p, &m_vecVertex[i].p, &matZTrans);
+		//}
+		//D3DXMatrixTranslation(&matZTrans, -3.0f, 0.0f, 0.0f);
+		//for (int i = 3; i < 6; ++i)
+		//{
+		//	D3DXVec3TransformCoord(&m_vecVertex[i].p, &m_vecVertex[i].p, &matZTrans);
+		//}
 	}
 
 	//m_pCubePC = new cCubePC;
@@ -89,7 +96,7 @@ void cMainGame::Setup()
 	//m_pCubeMan2->Setup(true);
 
 	m_pObjLoader = new cObjLoader;
-	m_pObjLoader->LoadObj("objects/map.obj");
+	m_pObjLoader->Load(m_vecGroup, "objects", "Map.obj");
 
 	m_pCamera = new cCamera;
 	//m_pCamera->Setup(&m_pCubePC->GetPosition());
@@ -126,7 +133,11 @@ void cMainGame::Render()
 		if (m_pCubeMan) m_pCubeMan->Render();
 		//if (m_pCubeMan2) m_pCubeMan2->Render();
 
-		if (m_pObjLoader) m_pObjLoader->Render();
+		for (int i = 0; i < m_vecGroup.size(); ++i)
+		{
+			m_vecGroup[i]->Render();
+		}
+
 	}
 
 	//texture test render

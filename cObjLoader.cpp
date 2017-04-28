@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "cObjLoader.h"
-#include "cObject.h"
+
+#include "cGroup.h"
 #include "cMtlTex.h"
 
 cObjLoader::cObjLoader()
@@ -12,184 +13,185 @@ cObjLoader::~cObjLoader()
 {
 }
 
-void cObjLoader::LoadObj(const char* fileName)
+void cObjLoader::Load(OUT std::vector<cGroup*>& vecGroup, IN char * szFolder, IN char * szFile)
 {
-	FILE* fp = NULL;
-	fopen_s(&fp, fileName, "r");
-	char szTemp[1024];
+	std::vector<D3DXVECTOR3> vecV;
+	std::vector<D3DXVECTOR2> vecVT;
+	std::vector<D3DXVECTOR3> vecVN;
+	std::vector<ST_PNT_VERTEX> vecVertex;
 
+	std::string sFullPath(szFolder);
+	sFullPath += (std::string("/") + std::string(szFile));
+
+	FILE *fp;
+	fopen_s(&fp, sFullPath.c_str(), "r");
+
+	std::string sMtlName;
 	while (fp != NULL)
 	{
 		if (feof(fp)) break;
+
+		char szTemp[1024];
 		fgets(szTemp, 1024, fp);
-		char typeTemp[128];
-		sscanf_s(szTemp, "%s", &typeTemp, 128);
-		string type = typeTemp;
 
-		if (type == "#") continue;
-		else if (type == "mtllib")
+		if (szTemp[0] == '#') continue;
+		if (szTemp[0] == 'm')
 		{
-			char mtlAdress[128];
-			sscanf_s(szTemp, "%*s %s", &mtlAdress, 128);
-			string sMtlAddress = mtlAdress;
-			string adress = "objects/" + sMtlAddress;
-			LoadMaterial(adress);
+			char szMtlFile[1024];
+			sscanf_s(szTemp, "%*s %s", szMtlFile, 1024);
+			LoadMtlLib(szFolder, szMtlFile);
 		}
-		else if (type == "v")
+		else if (szTemp[0] == 'g')
 		{
-			float x, y, z;
-			sscanf_s(szTemp, "%*s %f %f %f", &x, &y, &z);
-			D3DXVECTOR3 vecTemp(x, y, z);
-			m_vecVertices.push_back(vecTemp);
-		}
-		else if (type == "vt")
-		{
-			float u, v;
-			sscanf_s(szTemp, "%*s %f %f", &u, &v);
-			D3DXVECTOR2 vecTemp(u, v);
-			m_vecTextureVertices.push_back(vecTemp);
-		}
-		else if (type == "vn")
-		{
-			float x, y, z;
-			sscanf_s(szTemp, "%*s %f %f %f", &x, &y, &z);
-			D3DXVECTOR3 vecTemp(x, y, z);
-			m_vecVertexNormals.push_back(vecTemp);
-		}
-
-		//make faces
-		else if (type == "f")
-		{
-			int p1, t1, n1, p2, t2, n2, p3, t3, n3;
-
-			sscanf_s(szTemp, "%*s   %d %*c %d %*c %d	%d %*c %d %*c %d	%d %*c %d %*c %d", &p1, &t1, &n1, &p2, &t2, &n2, &p3, &t3, &n3);
-
-			ST_PNT_VERTEX tempVertex;
-			tempVertex.p = m_vecVertices[p1 - 1];
-			tempVertex.t = m_vecTextureVertices[t1 - 1];
-			tempVertex.n = m_vecVertexNormals[n1 - 1];
-			m_vecVertex.push_back(tempVertex);
-
-			tempVertex.p = m_vecVertices[p2 - 1];
-			tempVertex.t = m_vecTextureVertices[t2 - 1];
-			tempVertex.n = m_vecVertexNormals[n2 - 1];
-			m_vecVertex.push_back(tempVertex);
-
-			tempVertex.p = m_vecVertices[p3 - 1];
-			tempVertex.t = m_vecTextureVertices[t3 - 1];
-			tempVertex.n = m_vecVertexNormals[n3 - 1];
-			m_vecVertex.push_back(tempVertex);
-		}
-
-		//make object
-		else if (type == "g")
-		{
-			if (m_vecVertex.size() != 0)
+			if (!vecVertex.empty())
 			{
-				cObject tempObj;
-
-				map<string, MtlTex>::iterator miter;
-				miter = m_mapMaterial.find(m_sMtlName);
-				if (miter != m_mapMaterial.end())
+				cGroup* pGroup = new cGroup;
+				
+				//resizing & rotation
 				{
-					D3DMATERIAL9 tempMtl = miter->second.mtl;
-					m_sTextureName = miter->second.texName;
-
-					tempObj.Setup(m_sObjName, tempMtl, m_sTextureName, m_vecVertex, D3DXVECTOR3(0.01f, 0.01f, 0.01f));
-					m_vecObj.push_back(tempObj);
+					D3DXMATRIXA16 mat, matR, matS;
+					D3DXMatrixRotationX(&matR, -D3DX_PI * 0.5f);
+					D3DXMatrixScaling(&matS, 0.01f, 0.01f, 0.01f);
+					mat = matR*matS;
+					for (int i = 0; i < vecVertex.size(); ++i)
+					{
+						D3DXVec3TransformCoord(&vecVertex[i].p, &vecVertex[i].p, &mat);
+					}
 				}
+
+				pGroup->SetVertex(vecVertex);
+				pGroup->SetMtlTex(m_mapMtlTex[sMtlName]);
+				vecGroup.push_back(pGroup);
+				vecVertex.clear();
 			}
-			m_vecVertex.clear();
-
-			char objName[128];
-			sscanf_s(szTemp, "%*s %s", &objName, 128);
-			m_sObjName = objName;
 		}
-
-		//select mtl
-		else if (type == "usemtl")
+		else if (szTemp[0] == 'v')
 		{
-			char mtlName[128];
-			sscanf_s(szTemp, "%*s %s", &mtlName, 128);
-			m_sMtlName = mtlName;
+			if (szTemp[1] == ' ')
+			{
+				float x, y, z;
+				sscanf_s(szTemp, "%*s %f %f %f", &x, &y, &z);
+				vecV.push_back(D3DXVECTOR3(x, y, z));
+			}
+			else if (szTemp[1] == 't')
+			{
+				float u, v;
+				sscanf_s(szTemp, "%*s %f %f %*f", &u, &v);
+				vecVT.push_back(D3DXVECTOR2(u, v));
+			}
+			else if (szTemp[1] == 'n')
+			{
+				float x, y, z;
+				sscanf_s(szTemp, "%*s %f %f %f", &x, &y, &z);
+				vecVN.push_back(D3DXVECTOR3(x, y, z));
+			}
+		}
+		else if (szTemp[0] == 'u')
+		{
+			char szMtlName[1024];
+			sscanf_s(szTemp, "%*s %s", szMtlName, 1024);
+			sMtlName = std::string(szMtlName);
+		}
+		else if (szTemp[0] == 'f')
+		{
+			int nIndex[3][3];
+			sscanf_s(szTemp, "%*s %d/%d/%d %d/%d/%d %d/%d/%d",
+				&nIndex[0][0], &nIndex[0][1], &nIndex[0][2],
+				&nIndex[1][0], &nIndex[1][1], &nIndex[1][2],
+				&nIndex[2][0], &nIndex[2][1], &nIndex[2][2]);
+			for (int i = 0; i < 3; ++i)
+			{
+				ST_PNT_VERTEX v;
+				v.p = vecV[nIndex[i][0] - 1];
+				v.t = vecVT[nIndex[i][1] - 1];
+				v.n = vecVN[nIndex[i][2] - 1];
+				vecVertex.push_back(v);
+			}
 		}
 	}
+
+	fclose(fp);
+
+	for each(auto it in m_mapMtlTex)
+	{
+		SAFE_RELEASE(it.second);
+	}
+	m_mapMtlTex.clear();
 }
 
-void cObjLoader::LoadMaterial(string adress)
+void cObjLoader::LoadMtlLib(char * szFolder, char * szFile)
 {
-	FILE* fp = NULL;
-	fopen_s(&fp, adress.c_str(), "r");
-	char szTemp[1024];
+	std::string sFullPath(szFolder);
+	sFullPath += (std::string("/") + std::string(szFile));
 
-	MtlTex tempMtlTex;
-	ZeroMemory(&tempMtlTex, sizeof(MtlTex));
-	string tempMtlName;
+	FILE *fp;
+	fopen_s(&fp, sFullPath.c_str(), "r");
+	std::string sMtlName;
 
 	while (fp != NULL)
 	{
 		if (feof(fp)) break;
+		char szTemp[1024];
 		fgets(szTemp, 1024, fp);
-		char typeTemp[128];
-		sscanf_s(szTemp, "%s", &typeTemp, 128);
-		string type = typeTemp;
 
-		if (type == "#") continue;
-		else if (type == "newmtl")
+		if (szTemp[0] == '#') continue;
+		else if (szTemp[0] == 'n')
 		{
-			char mtlName[128];
-			sscanf_s(szTemp, "%*s %s", &mtlName, 128);
-			tempMtlName = mtlName;
+			char szMtlName[1024];
+			sscanf_s(szTemp, "%*s %s", szMtlName, 1024);
+			sMtlName = std::string(szMtlName);
+			if (m_mapMtlTex.find(sMtlName) == m_mapMtlTex.end())
+			{
+				m_mapMtlTex[sMtlName] = new cMtlTex;
+			}
 		}
-		else if (type == "Ka")
+		else if (szTemp[0] == 'K')
 		{
-			float r, g, b;
-			sscanf_s(szTemp, "%*s %f %f %f", &r, &g, &b);
-			tempMtlTex.mtl.Ambient = D3DXCOLOR(r, g, b, 1.0f);
+			if (szTemp[1] == 'a')
+			{
+				float r, g, b;
+				sscanf_s(szTemp, "%*s %f %f %f", &r, &g, &b);
+				m_mapMtlTex[sMtlName]->GetMaterial().Ambient.r = r;
+				m_mapMtlTex[sMtlName]->GetMaterial().Ambient.g = g;
+				m_mapMtlTex[sMtlName]->GetMaterial().Ambient.b = b;
+				m_mapMtlTex[sMtlName]->GetMaterial().Ambient.a = 1.0f;
+			}
+			else if (szTemp[1] == 'd')
+			{
+				float r, g, b;
+				sscanf_s(szTemp, "%*s %f %f %f", &r, &g, &b);
+				m_mapMtlTex[sMtlName]->GetMaterial().Diffuse.r = r;
+				m_mapMtlTex[sMtlName]->GetMaterial().Diffuse.g = g;
+				m_mapMtlTex[sMtlName]->GetMaterial().Diffuse.b = b;
+				m_mapMtlTex[sMtlName]->GetMaterial().Diffuse.a = 1.0f;
+			}
+			else if (szTemp[1] == 's')
+			{
+				float r, g, b;
+				sscanf_s(szTemp, "%*s %f %f %f", &r, &g, &b);
+				m_mapMtlTex[sMtlName]->GetMaterial().Specular.r = r;
+				m_mapMtlTex[sMtlName]->GetMaterial().Specular.g = g;
+				m_mapMtlTex[sMtlName]->GetMaterial().Specular.b = b;
+				m_mapMtlTex[sMtlName]->GetMaterial().Specular.a = 1.0f;
+			}
 		}
-		else if (type == "Kd")
-		{
-			float r, g, b;
-			sscanf_s(szTemp, "%*s %f %f %f", &r, &g, &b);
-			tempMtlTex.mtl.Diffuse = D3DXCOLOR(r, g, b, 1.0f);
-		}
-		else if (type == "Ks")
-		{
-			float r, g, b;
-			sscanf_s(szTemp, "%*s %f %f %f", &r, &g, &b);
-			tempMtlTex.mtl.Specular = D3DXCOLOR(r, g, b, 1.0f);
-		}
-		else if (type == "d")
+		else if (szTemp[0] == 'd')
 		{
 			float d;
-			sscanf_s(szTemp, "%*s %f", &d);
-			tempMtlTex.mtl.Power = d;
+			sscanf_s(szTemp, "%*s *f", &d);
+			m_mapMtlTex[sMtlName]->GetMaterial().Power = d;
 		}
-		else if (type == "map_Kd")
+		else if (szTemp[0] == 'm')
 		{
-			char textureName[128];
-			sscanf_s(szTemp, "%*s %s", &textureName, 128);
-			string sTextureName = textureName;
-			string adress = "objects/" + sTextureName;
+			char szTexFile[1024];
+			sscanf_s(szTemp, "%*s %s", szTexFile, 1024);
+			sFullPath = std::string(szFolder);
+			sFullPath += (std::string("/") + std::string(szTexFile));
 
-			tempMtlTex.texName = sTextureName;
-			LPDIRECT3DTEXTURE9 tempTexture = NULL;
-			D3DXCreateTextureFromFile(g_pD3DDevice, adress.c_str(), &tempTexture);
-			if (tempTexture != NULL) g_pTextureManager->AddTexture(sTextureName, tempTexture);
-
-			//add material to map(m_mapMaterial)
-			m_mapMaterial.insert(make_pair(tempMtlName, tempMtlTex));
-			
-			//reset the tempMtlTex
-			ZeroMemory(&tempMtlTex, sizeof(MtlTex));
+			LPDIRECT3DTEXTURE9 pTexture = g_pTextureManager->GetTexture(sFullPath);
+			m_mapMtlTex[sMtlName]->SetTexture(pTexture);
 		}
 	}
-}
 
-void cObjLoader::Render()
-{
-	for (int i = 0; i < m_vecObj.size(); ++i)
-	{
-		m_vecObj[i].Render();
-	}
+	fclose(fp);
 }

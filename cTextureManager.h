@@ -1,19 +1,15 @@
 #pragma once
-
-#define g_pTextureManager	cTextureManager::GetInstance()
+#define g_pTextureManager cTextureManager::GetInstance()
 
 class cTextureManager
 {
-public:
+private:
 	SINGLETONE(cTextureManager);
 
-private:
-	map<string, LPDIRECT3DTEXTURE9> m_mTexture;
+	std::map<std::string, LPDIRECT3DTEXTURE9> m_mapTexture;
 
 public:
-	void AddTexture(string name, LPDIRECT3DTEXTURE9 texture);
-	void DeleteTexture(string name, LPDIRECT3DTEXTURE9 texture);
-	LPDIRECT3DTEXTURE9 FindTexture(string name);
-
+	LPDIRECT3DTEXTURE9 GetTexture(char* szFullPath);
+	LPDIRECT3DTEXTURE9 GetTexture(std::string& sFullPath);
 	void Destroy();
 };

@@ -1,12 +1,7 @@
 #pragma once
 
-class cObject;
-
-struct MtlTex
-{
-	D3DMATERIAL9 mtl;
-	string texName;
-};
+class cMtlTex;
+class cGroup;
 
 class cObjLoader
 {
@@ -14,25 +9,10 @@ public:
 	cObjLoader();
 	~cObjLoader();
 
-	void LoadObj(const char* fileName);
-	void LoadMaterial(string adress);
-	void Render();
-
 private:
-	//LoadObj
-	std::vector<D3DXVECTOR3> m_vecVertices;
-	std::vector<D3DXVECTOR2> m_vecTextureVertices;
-	std::vector<D3DXVECTOR3> m_vecVertexNormals;
+	std::map<std::string, cMtlTex*> m_mapMtlTex;
 
-	//LoadMaterial
-	std::map<string, MtlTex> m_mapMaterial;
-
-	//MakeObj
-	string m_sObjName;
-	string m_sMtlName;
-	string m_sTextureName;
-	std::vector<ST_PNT_VERTEX> m_vecVertex;
-
-	//group
-	std::vector<cObject> m_vecObj;
+public:
+	void Load(OUT std::vector<cGroup*> & vecGroup, IN char* szFolder, IN char* szFile);
+	void LoadMtlLib(char* szFolder, char* szFile);
 };
