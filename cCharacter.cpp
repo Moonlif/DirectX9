@@ -69,15 +69,21 @@ void cCharacter::Update()
 	if (GetKeyState('W') & 0x8000)
 	{
 		m_vPosition = m_vPosition + m_vDirection * 0.1f;
-		if (FloorIntersect() - m_vPosition.y > 0.1f)
-			m_vPosition = m_vPosition - m_vDirection * 0.1f;
+
+		//if (FloorIntersect() - m_vPosition.y > 0.1f) m_vPosition = m_vPosition - m_vDirection * 0.1f;
+		
+		if (WallIntersect(true) < 0.2f) m_vPosition = m_vPosition - m_vDirection * 0.1f;
+
 		m_IsMoving = true;
 	}
 	else if (GetKeyState('S') & 0x8000)
 	{
 		m_vPosition = m_vPosition - m_vDirection * 0.1f;
-		if (FloorIntersect() - m_vPosition.y > 0.1f)
-			m_vPosition = m_vPosition + m_vDirection * 0.1f;
+
+		//if (FloorIntersect() - m_vPosition.y > 0.1f) m_vPosition = m_vPosition + m_vDirection * 0.1f;
+
+		if (WallIntersect(false) < 0.2f) m_vPosition = m_vPosition + m_vDirection * 0.1f;
+
 		m_IsMoving = true;
 	}
 
@@ -117,7 +123,7 @@ D3DXVECTOR3 & cCharacter::GetPosition()
 
 float cCharacter::FloorIntersect()
 {
-	float disTest = 0.0f;
+	float distance = 0.0f;
 	for each(auto it in m_vecGroup)
 	{
 		for (int i = 0; i < it->GetVertex().size(); i += 3)
@@ -143,10 +149,52 @@ float cCharacter::FloorIntersect()
 
 			if (D3DXIntersectTri(&p1, &p2, &p3, &rayPos, &rayDir, &u, &v, &dis))
 			{
-				disTest = 1000 - dis;
+				distance = 1000 - dis;
 			}
 		}
 	}
 
-	return disTest;
+	return distance;
+}
+
+float cCharacter::WallIntersect(bool isFront)
+{
+	int front;
+	if (isFront == true) front = 1;
+	else front = -1;
+
+	float distance = 1000.0f;
+
+	for each(auto it in m_vecGroup2)
+	{
+		for (int i = 0; i < it->GetVertex().size(); i += 3)
+		{
+			float u, v, dis;
+			u = 0.0f;
+			v = 0.0f;
+			dis = 0.0f;
+			D3DXVECTOR3 rayPos = m_vPosition;
+			rayPos.y += 0.2f;
+			D3DXVECTOR3 rayDir = front * m_vDirection;
+
+			D3DXVECTOR3 p1 = it->GetVertex()[i + 0].p;
+			D3DXVECTOR3 p2 = it->GetVertex()[i + 1].p;
+			D3DXVECTOR3 p3 = it->GetVertex()[i + 2].p;
+
+			D3DXMATRIXA16 matWorld, matS, matR;
+			D3DXMatrixScaling(&matS, 0.01f, 0.01f, 0.01f);
+			D3DXMatrixRotationX(&matR, -D3DX_PI * 0.5f);
+			matWorld = matS * matR;
+			D3DXVec3TransformCoord(&p1, &p1, &matWorld);
+			D3DXVec3TransformCoord(&p2, &p2, &matWorld);
+			D3DXVec3TransformCoord(&p3, &p3, &matWorld);
+
+			if (D3DXIntersectTri(&p1, &p2, &p3, &rayPos, &rayDir, &u, &v, &dis))
+			{
+				if (distance > dis) distance = dis;
+			}
+		}
+	}
+
+	return distance;
 }

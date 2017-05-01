@@ -32,5 +32,6 @@ public:
 	virtual D3DXVECTOR3& GetPosition();
 	
 	float FloorIntersect();
+	float WallIntersect(bool isFront);
 };
 
