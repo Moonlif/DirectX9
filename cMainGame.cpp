@@ -11,12 +11,6 @@
 #include "cGroup.h"
 #include "cObjLoader.h"
 
-//D3DXIntersect(v0 v1 v2 vPos v3dir m v f);
-//f : ray쏴서 오브젝트까지의 거리
-//v3pos (x, 1000, z)
-//v3dir (0, -1 ,0)
-
-
 cMainGame::cMainGame()
 	: m_pCubePC(NULL)
 	, m_pCamera(NULL)
@@ -24,7 +18,6 @@ cMainGame::cMainGame()
 	, m_pTexture(NULL)
 	, m_pCubeMan(NULL)
 	, m_pCubeMan2(NULL)
-	, m_pObjLoader(NULL)
 {	
 }
 
@@ -46,77 +39,24 @@ cMainGame::~cMainGame()
 void cMainGame::Setup()
 {
 	//texture test setting
-	{
-		//D3DXCreateTextureFromFile(g_pD3DDevice, "steam.png", &m_pTexture);
-		//ST_PT_VERTEX v;
-		//v.p = D3DXVECTOR3(0, 0, 0);
-		//v.t = D3DXVECTOR2(0, 1.0f);
-		//m_vecVertex.push_back(v);
-
-		//v.p = D3DXVECTOR3(0, 1, 0);
-		//v.t = D3DXVECTOR2(0, 0.5f);
-		//m_vecVertex.push_back(v);
-
-		//v.p = D3DXVECTOR3(1, 0, 0);
-		//v.t = D3DXVECTOR2(1, 1);
-		//m_vecVertex.push_back(v);
-
-		//v.p = D3DXVECTOR3(0, 0, 0);
-		//v.t = D3DXVECTOR2(0, 1.0f);
-		//m_vecVertex.push_back(v);
-
-		//v.p = D3DXVECTOR3(0, 1, 0);
-		//v.t = D3DXVECTOR2(0, 0.5f);
-		//m_vecVertex.push_back(v);
-
-		//v.p = D3DXVECTOR3(1, 0, 0);
-		//v.t = D3DXVECTOR2(1, 1);
-		//m_vecVertex.push_back(v);
-
-		//D3DXMATRIXA16 matZTrans;
-		//D3DXMatrixTranslation(&matZTrans, 0.0f, 0.0f, 3.0f);
-		//for (int i = 0; i < 3; ++i)
-		//{
-		//	D3DXVec3TransformCoord(&m_vecVertex[i].p, &m_vecVertex[i].p, &matZTrans);
-		//}
-		//D3DXMatrixTranslation(&matZTrans, -3.0f, 0.0f, 0.0f);
-		//for (int i = 3; i < 6; ++i)
-		//{
-		//	D3DXVec3TransformCoord(&m_vecVertex[i].p, &m_vecVertex[i].p, &matZTrans);
-		//}
-	}
-
-	//m_pCubePC = new cCubePC;
-	//m_pCubePC->Setup();
+	//D3DXCreateTextureFromFile(g_pD3DDevice, "steam.png", &m_pTexture);
 
 	m_pCubeMan = new cCubeMan;
 	m_pCubeMan->Setup(false);
 
-	//m_pCubeMan2 = new cCubeMan;
-	//m_pCubeMan2->Setup(true);
-
-	m_pObjLoader = new cObjLoader;
-	m_pObjLoader->Load(m_vecGroup, "objects", "Map.obj");
+	cObjLoader loadObj;
+	loadObj.Load(m_vecGroup, "objects", "Map.obj");
 
 	m_pCamera = new cCamera;
-	//m_pCamera->Setup(&m_pCubePC->GetPosition());
 	m_pCamera->Setup(&m_pCubeMan->GetPosition());
-	//m_pCamera->Setup(&m_vCamTarget);
-
-	m_pGrid = new cGrid;
-	m_pGrid->Setup(20, 20, 1.0f);
-
-	m_pPyramid = new cPyramid;
-	m_pPyramid->Setup();
 
 	Set_Light();
 }
 
 void cMainGame::Update()
 {
-	//if (m_pCubePC) m_pCubePC->Update();
 	if (m_pCubeMan) m_pCubeMan->Update();
-	//if (m_pCubeMan2) m_pCubeMan2->Update();
+
 	if (m_pCamera) m_pCamera->Update();
 }
 
@@ -125,20 +65,8 @@ void cMainGame::Render()
 	g_pD3DDevice->Clear(NULL, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(100,100,100), 1.0f, 0);
 	g_pD3DDevice->BeginScene();
 	
-	{
-		if (m_pGrid) m_pGrid->Render();
-		//if (m_pCubePC) m_pCubePC->Render();
-		if (m_pPyramid) m_pPyramid->Render();
-
-		if (m_pCubeMan) m_pCubeMan->Render();
-		//if (m_pCubeMan2) m_pCubeMan2->Render();
-
-		for (int i = 0; i < m_vecGroup.size(); ++i)
-		{
-			m_vecGroup[i]->Render();
-		}
-
-	}
+	Obj_Render();
+	if (m_pCubeMan) m_pCubeMan->Render();
 
 	//texture test render
 	{
@@ -148,7 +76,6 @@ void cMainGame::Render()
 		//g_pD3DDevice->SetTexture(0, m_pTexture);
 		//g_pD3DDevice->SetFVF(ST_PT_VERTEX::FVF);
 		//g_pD3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, m_vecVertex.size() / 3, &m_vecVertex[0], sizeof(ST_PT_VERTEX));
-
 		//g_pD3DDevice->SetTexture(0, NULL);
 	}
 
@@ -171,9 +98,9 @@ void cMainGame::Set_Light()
 
 	//directional light (green)
 	stLight.Type = D3DLIGHT_DIRECTIONAL;
-	stLight.Ambient = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
-	stLight.Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
-	stLight.Specular = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
+	stLight.Ambient = D3DXCOLOR(0.8f, 0.8f, 0.8f, 1.0f);
+	stLight.Diffuse = D3DXCOLOR(0.8f, 0.8f, 0.8f, 1.0f);
+	stLight.Specular = D3DXCOLOR(0.8f, 0.8f, 0.8f, 1.0f);
 
 	D3DXVECTOR3 vDir(1.0f, -1.0f, 1.0f);
 	D3DXVec3Normalize(&vDir, &vDir);
@@ -239,4 +166,19 @@ void cMainGame::Set_Light()
 	g_pD3DDevice->SetLight(2, &spotLight);
 	g_pD3DDevice->LightEnable(2, true);
 	*/
+}
+
+void cMainGame::Obj_Render()
+{
+	D3DXMATRIXA16 matWorld, matS, matR;
+	D3DXMatrixScaling(&matS, 0.01f, 0.01f, 0.01f);
+	D3DXMatrixRotationX(&matR, -D3DX_PI * 0.5f);
+	matWorld = matS * matR;
+
+	g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+	
+	for each (auto p in m_vecGroup)
+	{
+		p->Render();
+	}
 }

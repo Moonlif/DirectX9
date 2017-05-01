@@ -1,14 +1,13 @@
 #pragma once
 
-class cCubePC;
 class cCamera;
+
 class cGrid;
 class cPyramid;
-
+class cCubePC;
 class cCubeMan;
 
 class cGroup;
-class cObjLoader;
 
 class cMainGame
 {
@@ -23,11 +22,8 @@ private:
 	cCamera*		m_pCamera;
 	cGrid*			m_pGrid;
 	cPyramid*		m_pPyramid;
-
-	D3DXVECTOR3		m_vCamTarget;
 	
 	vector<cGroup*> m_vecGroup;
-	cObjLoader* m_pObjLoader;
 
 	//texture test
 	LPDIRECT3DTEXTURE9 m_pTexture;
@@ -41,5 +37,6 @@ public:
 	void WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 	void Set_Light();
+	void Obj_Render();
 };
 

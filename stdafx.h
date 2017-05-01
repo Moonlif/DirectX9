@@ -26,6 +26,7 @@
 #include <list>
 #include <string>
 #include <assert.h>
+#include <math.h>
 
 using namespace std;
 

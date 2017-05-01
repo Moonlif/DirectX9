@@ -10,11 +10,3 @@ cObjectManager::cObjectManager()
 cObjectManager::~cObjectManager()
 {
 }
-
-void cObjectManager::RemoveObject(cObject* obj)
-{
-}
-
-void cObjectManager::Destroy()
-{
-}

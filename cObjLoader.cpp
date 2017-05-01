@@ -27,14 +27,17 @@ void cObjLoader::Load(OUT std::vector<cGroup*>& vecGroup, IN char * szFolder, IN
 	fopen_s(&fp, sFullPath.c_str(), "r");
 
 	std::string sMtlName;
-	while (fp != NULL)
+
+	while (true)
 	{
 		if (feof(fp)) break;
 
 		char szTemp[1024];
 		fgets(szTemp, 1024, fp);
 
-		if (szTemp[0] == '#') continue;
+		if (szTemp[0] == '#')
+			continue;
+
 		if (szTemp[0] == 'm')
 		{
 			char szMtlFile[1024];
@@ -46,19 +49,6 @@ void cObjLoader::Load(OUT std::vector<cGroup*>& vecGroup, IN char * szFolder, IN
 			if (!vecVertex.empty())
 			{
 				cGroup* pGroup = new cGroup;
-				
-				//resizing & rotation
-				{
-					D3DXMATRIXA16 mat, matR, matS;
-					D3DXMatrixRotationX(&matR, -D3DX_PI * 0.5f);
-					D3DXMatrixScaling(&matS, 0.01f, 0.01f, 0.01f);
-					mat = matR*matS;
-					for (int i = 0; i < vecVertex.size(); ++i)
-					{
-						D3DXVec3TransformCoord(&vecVertex[i].p, &vecVertex[i].p, &mat);
-					}
-				}
-
 				pGroup->SetVertex(vecVertex);
 				pGroup->SetMtlTex(m_mapMtlTex[sMtlName]);
 				vecGroup.push_back(pGroup);
@@ -98,8 +88,10 @@ void cObjLoader::Load(OUT std::vector<cGroup*>& vecGroup, IN char * szFolder, IN
 			sscanf_s(szTemp, "%*s %d/%d/%d %d/%d/%d %d/%d/%d",
 				&nIndex[0][0], &nIndex[0][1], &nIndex[0][2],
 				&nIndex[1][0], &nIndex[1][1], &nIndex[1][2],
-				&nIndex[2][0], &nIndex[2][1], &nIndex[2][2]);
-			for (int i = 0; i < 3; ++i)
+				&nIndex[2][0], &nIndex[2][1], &nIndex[2][2]
+			);
+
+			for (int i = 0; i < 3; i++)
 			{
 				ST_PNT_VERTEX v;
 				v.p = vecV[nIndex[i][0] - 1];
@@ -126,24 +118,25 @@ void cObjLoader::LoadMtlLib(char * szFolder, char * szFile)
 
 	FILE *fp;
 	fopen_s(&fp, sFullPath.c_str(), "r");
-	std::string sMtlName;
 
-	while (fp != NULL)
+	std::string sMtlName;
+	while (true)
 	{
 		if (feof(fp)) break;
+
 		char szTemp[1024];
 		fgets(szTemp, 1024, fp);
 
-		if (szTemp[0] == '#') continue;
-		else if (szTemp[0] == 'n')
+		if (szTemp[0] == '#')
+			continue;
+
+		if (szTemp[0] == 'n')
 		{
 			char szMtlName[1024];
 			sscanf_s(szTemp, "%*s %s", szMtlName, 1024);
 			sMtlName = std::string(szMtlName);
 			if (m_mapMtlTex.find(sMtlName) == m_mapMtlTex.end())
-			{
 				m_mapMtlTex[sMtlName] = new cMtlTex;
-			}
 		}
 		else if (szTemp[0] == 'K')
 		{
@@ -178,7 +171,7 @@ void cObjLoader::LoadMtlLib(char * szFolder, char * szFile)
 		else if (szTemp[0] == 'd')
 		{
 			float d;
-			sscanf_s(szTemp, "%*s *f", &d);
+			sscanf_s(szTemp, "%*s %f", &d);
 			m_mapMtlTex[sMtlName]->GetMaterial().Power = d;
 		}
 		else if (szTemp[0] == 'm')

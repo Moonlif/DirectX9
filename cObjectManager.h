@@ -1,15 +1,25 @@
 #pragma once
-#define g_ObjectManager cObjectManager::GetInstance()
+#define g_pObjectManager cObjectManager::GetInstance()
 
 class cObjectManager
 {
 private:
 	SINGLETONE(cObjectManager);
 
-	std::map<std::string, cObject> m_mapObject;
+	std::set<cObject*> m_setObject;
 
 public:
-	void RemoveObject(cObject* obj);
-	void Destroy();
+	void AddObject(cObject* pObject)
+	{
+		m_setObject.insert(pObject);
+	}
+	void RemoveObject(cObject* pObject)
+	{
+		m_setObject.erase(pObject);
+	}
+	void Destroy()
+	{
+		m_setObject.clear();
+	}
 };
 

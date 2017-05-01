@@ -1,4 +1,5 @@
 #pragma once
+class cGroup;
 
 class cCharacter
 {
@@ -18,6 +19,9 @@ protected:
 	int m_jumpTime;
 	float m_fGravity;
 
+	vector<cGroup*> m_vecGroup;
+	vector<cGroup*> m_vecGroup2;
+
 public:
 	virtual ~cCharacter();
 
@@ -26,5 +30,7 @@ public:
 	virtual void Render();
 
 	virtual D3DXVECTOR3& GetPosition();
+	
+	float FloorIntersect();
 };
 

@@ -10,7 +10,7 @@ cObject::cObject()
 
 cObject::~cObject()
 {
-	g_ObjectManager->RemoveObject(this);
+	g_pObjectManager->RemoveObject(this);
 }
 
 void cObject::AddRef()

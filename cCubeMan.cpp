@@ -79,18 +79,16 @@ void cCubeMan::Setup(bool isLerp)
 void cCubeMan::Update()
 {
 	cCharacter::Update();
-	//MoveToDest();
+	//MoveToDest(); //bezier curve
 
 	if (m_pRoot) m_pRoot->Update();
 }
 
 void cCubeMan::Render()
 {
-	//teacher code
-	//material setting
 	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
+
 	g_pD3DDevice->SetMaterial(&m_stMtl);
-	//
 
 	g_pD3DDevice->SetTexture(0, m_pTexture);
 

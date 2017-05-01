@@ -1,6 +1,10 @@
 #include "stdafx.h"
 #include "cCharacter.h"
+#include "cObjLoader.h"
+#include "cGroup.h"
+
 #define GRAVITY_ACCEL 0.01f
+#define EPSILON 0.1f
 
 cCharacter::cCharacter()
 	: m_vDirection(0, 0, 1)
@@ -12,6 +16,9 @@ cCharacter::cCharacter()
 	, m_fGravity(0.0f)
 {
 	D3DXMatrixIdentity(&m_matWorld);
+	cObjLoader objLoad;
+	objLoad.Load(m_vecGroup, "objects", "map_surface.obj");
+	objLoad.Load(m_vecGroup2, "objects", "Map.obj");
 }
 
 
@@ -27,21 +34,25 @@ void cCharacter::Update()
 {
 	m_IsMoving = false;
 
-	if (m_jumpTime > 0)
+	//jump code
 	{
-		m_jumpTime--;
-		m_vPosition.y += 0.2f;
-	}
+		if (m_jumpTime > 0)
+		{
+			m_jumpTime--;
+			m_vPosition.y += 0.2f;
+		}
 
-	m_fGravity += GRAVITY_ACCEL;
-	if (m_fGravity > 0.50f) m_fGravity = 0.50f;
-	m_vPosition.y -= m_fGravity;
-	if (m_vPosition.y < 0) m_vPosition.y = 0.0f;
+		m_fGravity += GRAVITY_ACCEL;
+		if (m_fGravity > 0.50f) m_fGravity = 0.50f;
 
-	//jump key (spcae bar)
-	if (GetKeyState(VK_SPACE) & 0x8000)
-	{
-		if (m_IsJumping == false) m_jumpTime = 30;
+		m_vPosition.y -= m_fGravity;
+
+		//jump key (spcae bar)
+		if (GetKeyState(VK_SPACE) & 0x8000)
+		{
+			if (m_IsJumping == false) m_jumpTime = 30;
+			m_IsJumping = true;
+		}
 	}
 
 	//box direction rotation (A,D)
@@ -58,11 +69,15 @@ void cCharacter::Update()
 	if (GetKeyState('W') & 0x8000)
 	{
 		m_vPosition = m_vPosition + m_vDirection * 0.1f;
+		if (FloorIntersect() - m_vPosition.y > 0.1f)
+			m_vPosition = m_vPosition - m_vDirection * 0.1f;
 		m_IsMoving = true;
 	}
 	else if (GetKeyState('S') & 0x8000)
 	{
 		m_vPosition = m_vPosition - m_vDirection * 0.1f;
+		if (FloorIntersect() - m_vPosition.y > 0.1f)
+			m_vPosition = m_vPosition + m_vDirection * 0.1f;
 		m_IsMoving = true;
 	}
 
@@ -70,7 +85,6 @@ void cCharacter::Update()
 	D3DXMatrixRotationX(&matRX, m_vRotation.x);
 	D3DXMatrixRotationY(&matRY, m_vRotation.y);
 	D3DXMatrixRotationZ(&matRZ, m_vRotation.z);
-
 	matR = matRX * matRY * matRZ;
 
 	D3DXMATRIXA16 matT;
@@ -78,14 +92,15 @@ void cCharacter::Update()
 
 	m_matWorld = matR * matT;
 
-	//
 	m_vDirection = D3DXVECTOR3(0, 0, 1);
 	D3DXVec3TransformNormal(&m_vDirection, &m_vDirection, &matRY);
 	D3DXVec3Normalize(&m_vDirection, &m_vDirection);
 
-	if (m_vPosition.y > 0) m_IsJumping = true;
+	//position
+	if (m_vPosition.y - FloorIntersect() > EPSILON) m_IsJumping = true;
 	else
 	{
+		m_vPosition.y = FloorIntersect();
 		m_IsJumping = false;
 		m_fGravity = 0.0f;
 	}
@@ -98,4 +113,40 @@ void cCharacter::Render()
 D3DXVECTOR3 & cCharacter::GetPosition()
 {
 	return m_vPosition;
+}
+
+float cCharacter::FloorIntersect()
+{
+	float disTest = 0.0f;
+	for each(auto it in m_vecGroup)
+	{
+		for (int i = 0; i < it->GetVertex().size(); i += 3)
+		{
+			float u, v, dis;
+			u = 0.0f;
+			v = 0.0f;
+			dis = 1000.0f;
+			D3DXVECTOR3 rayPos = D3DXVECTOR3(m_vPosition.x, 1000, m_vPosition.z);
+			D3DXVECTOR3 rayDir = D3DXVECTOR3(0, -1, 0);
+
+			D3DXVECTOR3 p1 = it->GetVertex()[i + 0].p;
+			D3DXVECTOR3 p2 = it->GetVertex()[i + 1].p;
+			D3DXVECTOR3 p3 = it->GetVertex()[i + 2].p;
+
+			D3DXMATRIXA16 matWorld, matS, matR;
+			D3DXMatrixScaling(&matS, 0.01f, 0.01f, 0.01f);
+			D3DXMatrixRotationX(&matR, -D3DX_PI * 0.5f);
+			matWorld = matS * matR;
+			D3DXVec3TransformCoord(&p1, &p1, &matWorld);
+			D3DXVec3TransformCoord(&p2, &p2, &matWorld);
+			D3DXVec3TransformCoord(&p3, &p3, &matWorld);
+
+			if (D3DXIntersectTri(&p1, &p2, &p3, &rayPos, &rayDir, &u, &v, &dis))
+			{
+				disTest = 1000 - dis;
+			}
+		}
+	}
+
+	return disTest;
 }
