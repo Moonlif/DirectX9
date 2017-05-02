@@ -12,6 +12,9 @@
 #include "cObjLoader.h"
 #include "cObjMap.h"
 
+#include "cGeomObject.h"
+#include "cAseLoader.h"
+
 cMainGame::cMainGame()
 	: m_pCubePC(NULL)
 	, m_pCamera(NULL)
@@ -47,20 +50,27 @@ void cMainGame::Setup()
 	m_pCubeMan = new cCubeMan;
 	m_pCubeMan->Setup(false);
 
-	cObjLoader loadObj;
-	loadObj.Load(m_vecGroup, "objects", "Map.obj");
+	//cObjLoader loadObj;
+	//loadObj.Load(m_vecGroup, "objects", "Map.obj");
+	
+	//Load_Surface();
 
-	Load_Surface();
+	cAseLoader loadAse;
+	loadAse.Load(m_vecGeomObject, "objects/woman", "woman_01_all.ASE");
 
 	m_pCamera = new cCamera;
 	m_pCamera->Setup(&m_pCubeMan->GetPosition());
+	m_pGrid = new cGrid;
+	m_pGrid->Setup(10, 10, 1);
+	m_pPyramid = new cPyramid;
+	m_pPyramid->Setup();
 
 	Set_Light();
 }
 
 void cMainGame::Update()
 {
-	if (m_pCubeMan) m_pCubeMan->Update(m_pMap);
+	//if (m_pCubeMan) m_pCubeMan->Update(m_pMap);
 
 	if (m_pCamera) m_pCamera->Update();
 }
@@ -70,8 +80,16 @@ void cMainGame::Render()
 	g_pD3DDevice->Clear(NULL, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(100,100,100), 1.0f, 0);
 	g_pD3DDevice->BeginScene();
 	
-	Obj_Render();
-	if (m_pCubeMan) m_pCubeMan->Render();
+	if (m_pGrid) m_pGrid->Render();
+	if (m_pPyramid) m_pPyramid->Render();
+
+	for each (auto p in m_vecGeomObject)
+	{
+		p->Render();
+	}
+
+	//Obj_Render();
+	//if (m_pCubeMan) m_pCubeMan->Render();
 
 	//texture test render
 	{

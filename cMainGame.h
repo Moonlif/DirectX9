@@ -10,6 +10,8 @@ class cCubeMan;
 class cGroup;
 class iMap;
 
+class cGeomObject;
+
 class cMainGame
 {
 public:
@@ -26,6 +28,7 @@ private:
 	
 	vector<cGroup*> m_vecGroup;
 	iMap* m_pMap;
+	vector<cGeomObject*> m_vecGeomObject;
 
 	//texture test
 	LPDIRECT3DTEXTURE9 m_pTexture;
