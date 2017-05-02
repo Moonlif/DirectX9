@@ -10,6 +10,7 @@
 
 #include "cGroup.h"
 #include "cObjLoader.h"
+#include "cObjMap.h"
 
 cMainGame::cMainGame()
 	: m_pCubePC(NULL)
@@ -18,6 +19,7 @@ cMainGame::cMainGame()
 	, m_pTexture(NULL)
 	, m_pCubeMan(NULL)
 	, m_pCubeMan2(NULL)
+	, m_pMap(NULL)
 {	
 }
 
@@ -27,10 +29,11 @@ cMainGame::~cMainGame()
 	SAFE_DELETE(m_pCubePC);
 	SAFE_DELETE(m_pCamera);
 	SAFE_DELETE(m_pGrid);
-	SAFE_RELEASE(m_pTexture);
-
 	SAFE_DELETE(m_pCubeMan);
 	SAFE_DELETE(m_pCubeMan2);
+	SAFE_DELETE(m_pMap);
+
+	SAFE_RELEASE(m_pTexture);
 
 	g_pDeviceManager->Destroy();
 	g_pTextureManager->Destroy();
@@ -47,6 +50,8 @@ void cMainGame::Setup()
 	cObjLoader loadObj;
 	loadObj.Load(m_vecGroup, "objects", "Map.obj");
 
+	Load_Surface();
+
 	m_pCamera = new cCamera;
 	m_pCamera->Setup(&m_pCubeMan->GetPosition());
 
@@ -55,7 +60,7 @@ void cMainGame::Setup()
 
 void cMainGame::Update()
 {
-	if (m_pCubeMan) m_pCubeMan->Update();
+	if (m_pCubeMan) m_pCubeMan->Update(m_pMap);
 
 	if (m_pCamera) m_pCamera->Update();
 }
@@ -181,4 +186,14 @@ void cMainGame::Obj_Render()
 	{
 		p->Render();
 	}
+}
+
+void cMainGame::Load_Surface()
+{
+	D3DXMATRIXA16 matWorld, matS, matR;
+	D3DXMatrixScaling(&matS, 0.01f, 0.01f, 0.01f);
+	D3DXMatrixRotationX(&matR, -D3DX_PI * 0.5f);
+	matWorld = matS * matR;
+
+	m_pMap = new cObjMap("objects", "map_surface.obj", &matWorld);
 }

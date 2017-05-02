@@ -97,6 +97,7 @@ struct ST_PT_VERTEX
 };
 
 #include "cObject.h"
+#include "iMap.h"
 //singletone
 #include "cDeviceManager.h"
 #include "cTextureManager.h"

@@ -1,7 +1,7 @@
 #pragma once
 #include "cCharacter.h"
 class cCubeNode;
-
+class iMap;
 class cCubeMan : public cCharacter
 {
 public:
@@ -14,7 +14,7 @@ public:
 	LPDIRECT3DTEXTURE9 m_pTexture;
 
 	virtual void Setup(bool isLerp);
-	virtual void Update() override;
+	virtual void Update(iMap* pMap) override;
 	virtual void Render() override;
 
 	void Set_Material();

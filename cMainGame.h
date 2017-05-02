@@ -8,6 +8,7 @@ class cCubePC;
 class cCubeMan;
 
 class cGroup;
+class iMap;
 
 class cMainGame
 {
@@ -24,6 +25,7 @@ private:
 	cPyramid*		m_pPyramid;
 	
 	vector<cGroup*> m_vecGroup;
+	iMap* m_pMap;
 
 	//texture test
 	LPDIRECT3DTEXTURE9 m_pTexture;
@@ -38,5 +40,7 @@ public:
 
 	void Set_Light();
 	void Obj_Render();
+	void Load_Surface();
+
 };
 

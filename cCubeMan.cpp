@@ -63,7 +63,7 @@ void cCubeMan::Setup(bool isLerp)
 	//texture
 	D3DXCreateTextureFromFile(g_pD3DDevice, "batman.png", &m_pTexture);
 
-	m_vPosition = D3DXVECTOR3(5, 0, 0);
+	m_vPosition = D3DXVECTOR3(0, 0, 0);
 
 	//destination setting
 	m_vDest[0] = D3DXVECTOR3(5.0f, 0, 0);
@@ -76,9 +76,9 @@ void cCubeMan::Setup(bool isLerp)
 	m_IsLerp = isLerp;
 }
 
-void cCubeMan::Update()
+void cCubeMan::Update(iMap* pMap)
 {
-	cCharacter::Update();
+	cCharacter::Update(pMap);
 	//MoveToDest(); //bezier curve
 
 	if (m_pRoot) m_pRoot->Update();
