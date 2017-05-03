@@ -28,7 +28,7 @@ void cCamera::Setup(D3DXVECTOR3 * pvTarget)
 	GetClientRect(g_hWnd, &rc);
 
 	D3DXMATRIXA16 matProj;
-	D3DXMatrixPerspectiveFovLH(&matProj, D3DX_PI / 4.0f, rc.right / (float)rc.bottom, 1.0f, 1000.0f);
+	D3DXMatrixPerspectiveFovLH(&matProj, D3DX_PI / 8.0f, rc.right / (float)rc.bottom, 1.0f, 1000.0f);
 	g_pD3DDevice->SetTransform(D3DTS_PROJECTION, &matProj);
 }
 
@@ -96,6 +96,8 @@ void cCamera::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		m_fCameraDistance -= (GET_WHEEL_DELTA_WPARAM(wParam) / 120.f);
 		if (m_fCameraDistance < 0.0001f)
 			m_fCameraDistance = 0.0001f;
+		if (m_fCameraDistance > 10.0f)
+			m_fCameraDistance = 10.0f;
 		break;
 	}
 }

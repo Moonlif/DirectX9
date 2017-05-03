@@ -105,7 +105,7 @@ void cCubeMan::Set_Material()
 	m_stMtl.Ambient = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 	m_stMtl.Specular = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 	//m_stMtl.Emissive = D3DXCOLOR(0.5f, 0.5f, 0.0f, 1.0f);
-	m_stMtl.Power = 2.0f;
+	//m_stMtl.Power = 2.0f;
 }
 
 void cCubeMan::MoveToDest()

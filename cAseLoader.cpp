@@ -27,9 +27,10 @@ void cAseLoader::Load(OUT std::vector<cGeomObject*>& vecGeomObject, IN char * sz
 	std::string sObjParentName;
 	D3DXMATRIXA16 matWorld;
 	D3DXMatrixIdentity(&matWorld);
-	std::vector<ST_PNT_VERTEX> vecV;
 	std::vector<int> vecFaceIndex;
+	std::vector<D3DXVECTOR3> vecV;
 	std::vector<D3DXVECTOR2> vecVT;
+	std::vector<D3DXVECTOR3> vecVN;
 	std::vector<ST_PNT_VERTEX> vecVertex;
 	int nMtlTexIndex = 0;
 	int nMtlNum = 0;
@@ -48,8 +49,21 @@ void cAseLoader::Load(OUT std::vector<cGeomObject*>& vecGeomObject, IN char * sz
 			{
 				for (int i = 0; i < vecFaceIndex.size(); i += 3)
 				{
-					vecVertex[i].p = vecV[vecFaceIndex[i]].p;
-					vecVertex[i].n = vecV[vecFaceIndex[i]].n;
+					vecVertex[i].p = vecV[vecFaceIndex[i]];
+					vecVertex[i].n = vecVN[vecFaceIndex[i]];
+				}
+
+				if (sObjParentName.empty() == false)
+				{
+					for each (auto it in vecGeomObject)
+					{
+						if (it->GetName() == sObjParentName)
+						{
+							D3DXMATRIXA16 tempMat;
+							D3DXMatrixInverse(&tempMat, NULL, &it->GetmatWorld());
+							matWorld = matWorld * tempMat;
+						}
+					}
 				}
 
 				cGeomObject* pGeomObj = new cGeomObject;
@@ -68,6 +82,8 @@ void cAseLoader::Load(OUT std::vector<cGeomObject*>& vecGeomObject, IN char * sz
 		char szTypeName[1024];
 		sscanf_s(szTemp, "%s", szTypeName, 1024);
 		string sTypeName = szTypeName;
+
+		if (sTypeName == "}") continue;
 
 		if (sTypeName == ID_SCENE)
 		{
@@ -121,21 +137,35 @@ void cAseLoader::Load(OUT std::vector<cGeomObject*>& vecGeomObject, IN char * sz
 			sscanf_s(szTemp, "%*s %s", szTexFile, 1024);
 			string sTexFile = szTexFile;
 			sTexFile.erase(0, 9);
+			sTexFile.pop_back();
 			string sTexFullPath = szFolder;
 			sTexFullPath += (std::string("/") + sTexFile);
 
-			LPDIRECT3DTEXTURE9 pTexture = g_pTextureManager->GetTexture(sFullPath);
-			m_vecMtlTex[nMtlNum]->SetTexture(pTexture);
+			LPDIRECT3DTEXTURE9 pTexture = g_pTextureManager->GetTexture(sTexFullPath);
+			m_vecMtlTex[nMtlTexIndex]->SetTexture(pTexture);
 		}
 
 		else if (sTypeName == ID_GEOMETRY)
 		{
 			if (vecFaceIndex.empty() == false)
 			{
-				for (int i = 0; i < vecFaceIndex.size(); i += 3)
+				for (int i = 0; i < vecFaceIndex.size(); ++i)
 				{
-					vecVertex[i].p = vecV[vecFaceIndex[i]].p;
-					vecVertex[i].n = vecV[vecFaceIndex[i]].n;
+					vecVertex[i].p = vecV[vecFaceIndex[i]];
+					vecVertex[i].n = vecVN[vecFaceIndex[i]];
+				}
+
+				if (sObjParentName.empty() == false)
+				{
+					for each (auto it in vecGeomObject)
+					{
+						if (it->GetName() == sObjParentName)
+						{
+							D3DXMATRIXA16 tempMat;
+							D3DXMatrixInverse(&tempMat, NULL, &it->GetmatWorld());
+							matWorld = matWorld * tempMat;
+						}
+					}
 				}
 
 				cGeomObject* pGeomObj = new cGeomObject;
@@ -150,63 +180,65 @@ void cAseLoader::Load(OUT std::vector<cGeomObject*>& vecGeomObject, IN char * sz
 			sObjName.clear();
 			sObjParentName.clear();
 			D3DXMatrixIdentity(&matWorld);
-			vecVertex.clear();
-			vecV.clear();
+
 			vecFaceIndex.clear();
+			vecV.clear();
 			vecVT.clear();
+			vecVN.clear();
+			vecVertex.clear();
 			nMtlNum = 0;
 		}
 		else if (sTypeName == ID_NODE_NAME)
 		{
-			char szObjName[1024];
-			sscanf_s(szTemp, "%*s %s", szObjName, 1024);
-			sObjName = szObjName;
+			sObjName = std::string(szTemp).erase(0, sTypeName.size() + 4);
+			sObjName.pop_back();
+			sObjName.pop_back();
 		}
 		else if (sTypeName == ID_NODE_PARENT)
 		{
-			char szObjParentName[1024];
-			sscanf_s(szTemp, "%*s %s", szObjParentName, 1024);
-			sObjParentName = szObjParentName;
+			sObjParentName = std::string(szTemp).erase(0, sTypeName.size() + 3);
+			sObjParentName.pop_back();
+			sObjParentName.pop_back();
 		}
 		else if (sTypeName == ID_TM_ROW0)
 		{
 			float x, y, z;
 			sscanf_s(szTemp, "%*s %f %f %f", &x, &y, &z);
 			matWorld[0] = x;
-			matWorld[1] = y;
-			matWorld[2] = z;
+			matWorld[2] = y;
+			matWorld[1] = z;
 		}
 		else if (sTypeName == ID_TM_ROW1)
 		{
 			float x, y, z;
 			sscanf_s(szTemp, "%*s %f %f %f", &x, &y, &z);
-			matWorld[4] = x;
-			matWorld[5] = y;
-			matWorld[6] = z;
+			matWorld[8] = x;
+			matWorld[10] = y;
+			matWorld[9] = z;
 		}
 		else if (sTypeName == ID_TM_ROW2)
 		{
 			float x, y, z;
 			sscanf_s(szTemp, "%*s %f %f %f", &x, &y, &z);
-			matWorld[8] = x;
-			matWorld[9] = y;
-			matWorld[10] = z;
+			matWorld[4] = x;
+			matWorld[6] = y;
+			matWorld[5] = z;
 		}
 		else if (sTypeName == ID_TM_ROW3)
 		{
 			float x, y, z;
 			sscanf_s(szTemp, "%*s %f %f %f", &x, &y, &z);
 			matWorld[12] = x;
-			matWorld[13] = y;
-			matWorld[14] = z;
+			matWorld[14] = y;
+			matWorld[13] = z;
 		}
-
 
 		else if (sTypeName == ID_MESH_NUMVERTEX)
 		{
 			int Mesh_NumVertex = 0;
 			sscanf_s(szTemp, "%*s %d", &Mesh_NumVertex);
 			vecV.resize(Mesh_NumVertex);
+			vecVN.resize(Mesh_NumVertex);
 		}
 		else if (sTypeName == ID_MESH_NUMFACES)
 		{
@@ -219,17 +251,17 @@ void cAseLoader::Load(OUT std::vector<cGeomObject*>& vecGeomObject, IN char * sz
 			int nVertexIndex;
 			float x, y, z;
 			sscanf_s(szTemp, "%*s %d %f %f %f", &nVertexIndex, &x, &y, &z);
-			vecV[nVertexIndex].p.x = x;
-			vecV[nVertexIndex].p.y = y;
-			vecV[nVertexIndex].p.z = -z;
+			vecV[nVertexIndex].x = x;
+			vecV[nVertexIndex].y = z;
+			vecV[nVertexIndex].z = y;
 		}
 		else if (sTypeName == ID_MESH_FACE)
 		{
 			int nFaceIndex, p0, p1, p2;
 			sscanf_s(szTemp, "%*s %d %*c %*s %d %*s %d %*s %d", &nFaceIndex, &p0, &p1, &p2);
 			vecFaceIndex.push_back(p0);
-			vecFaceIndex.push_back(p1);
 			vecFaceIndex.push_back(p2);
+			vecFaceIndex.push_back(p1);
 		}
 		else if (sTypeName == ID_MESH_NUMTVERTEX)
 		{
@@ -240,30 +272,29 @@ void cAseLoader::Load(OUT std::vector<cGeomObject*>& vecGeomObject, IN char * sz
 		else if (sTypeName == ID_MESH_TVERT)
 		{
 			int nTVertexIndex;
-			float u, v;
-			sscanf_s(szTemp, "%*s %d %f %f %*f", &nTVertexIndex, &u, &v);
-			vecVT[nTVertexIndex] = D3DXVECTOR2(u, v);
+			float u, v, w;
+			sscanf_s(szTemp, "%*s %d %f %f %f", &nTVertexIndex, &u, &v, &w);
+			vecVT[nTVertexIndex] = D3DXVECTOR2(u, 1.0 - v);
 		}
 		else if (sTypeName == ID_MESH_TFACE)
 		{
 			int nTFaceIndex, p0, p1, p2;
 			sscanf_s(szTemp, "%*s %d %d %d %d", &nTFaceIndex, &p0, &p1, &p2);
 			vecVertex[nTFaceIndex * 3 + 0].t = vecVT[p0];
-			vecVertex[nTFaceIndex * 3 + 1].t = vecVT[p1];
-			vecVertex[nTFaceIndex * 3 + 2].t = vecVT[p2];
+			vecVertex[nTFaceIndex * 3 + 1].t = vecVT[p2];
+			vecVertex[nTFaceIndex * 3 + 2].t = vecVT[p1];
 		}
 		else if (sTypeName == ID_MESH_VERTEXNORMAL)
 		{
 			int nNFaceIndex;
 			float x, y, z;
 			sscanf_s(szTemp, "%*s %d %f %f %f", &nNFaceIndex, &x, &y, &z);
-			vecV[nNFaceIndex].n = D3DXVECTOR3(x, y, z);
+			vecVN[nNFaceIndex] = D3DXVECTOR3(x, z, y);
 		}
 		else if (sTypeName == ID_MATERIAL_REF)
 		{
 			sscanf_s(szTemp, "%*s %d", &nMtlNum);
 		}
-		else continue;
 	}
 
 	fclose(fp);

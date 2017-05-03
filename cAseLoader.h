@@ -14,6 +14,5 @@ private:
 
 public:
 	void Load(OUT std::vector<cGeomObject*> & vecGeomObject, IN char* szFolder, IN char* szFile);
-
 };
 
