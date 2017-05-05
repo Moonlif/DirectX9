@@ -15,6 +15,7 @@ cAseLoader::~cAseLoader()
 
 void cAseLoader::Load(OUT std::vector<cGeomObject*>& vecGeomObject, IN char * szFolder, IN char * szFile)
 {
+	int count = 0;
 	//Scene
 	//string scene_Name;
 	//int scene_FirstFrame, scene_LastFrame, sceneFrameSpeed;
@@ -47,7 +48,7 @@ void cAseLoader::Load(OUT std::vector<cGeomObject*>& vecGeomObject, IN char * sz
 		{
 			if (vecFaceIndex.empty() == false)
 			{
-				for (int i = 0; i < vecFaceIndex.size(); i += 3)
+				for (int i = 0; i < vecFaceIndex.size(); ++i)
 				{
 					vecVertex[i].p = vecV[vecFaceIndex[i]];
 					vecVertex[i].n = vecVN[vecFaceIndex[i]];
@@ -74,6 +75,18 @@ void cAseLoader::Load(OUT std::vector<cGeomObject*>& vecGeomObject, IN char * sz
 				pGeomObj->SetMtlTex(m_vecMtlTex[nMtlNum]);
 				vecGeomObject.push_back(pGeomObj);
 			}
+
+			sObjName.clear();
+			sObjParentName.clear();
+			D3DXMatrixIdentity(&matWorld);
+
+			vecFaceIndex.clear();
+			vecV.clear();
+			vecVT.clear();
+			vecVN.clear();
+			vecVertex.clear();
+			nMtlNum = 0;
+
 			break;
 		}
 

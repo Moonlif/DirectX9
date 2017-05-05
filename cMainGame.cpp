@@ -85,6 +85,8 @@ void cMainGame::Render()
 
 	for each (auto p in m_vecGeomObject)
 	{
+		std::string name = p->GetName();
+		if (name[0] == 'B' && name[1] == 'i' &&name[2] == 'p') continue;
 		p->Render();
 	}
 
