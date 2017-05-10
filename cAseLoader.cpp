@@ -605,8 +605,8 @@ void cAseLoader::ProcessCONTROL_POS_TRACK(OUT cFrame * pFrame)
 		{
 			stPosSample.n = GetInteger();
 			stPosSample.v.x = GetFloat();
-			stPosSample.v.y = GetFloat();
 			stPosSample.v.z = GetFloat();
+			stPosSample.v.y = GetFloat();
 
 			vecPosTrack.push_back(stPosSample);
 			ZeroMemory(&stPosSample, sizeof(ST_POS_SAMPLE));
@@ -639,14 +639,24 @@ void cAseLoader::ProcessCONTROL_ROT_TRACK(OUT cFrame * pFrame)
 		}
 		else if (IsEqual(szToken, ID_ROT_SAMPLE))
 		{
+			D3DXVECTOR3 v;
+			float w;
+
 			stRotSample.n = GetInteger();
-			stRotSample.q.x = GetFloat();
-			stRotSample.q.y = GetFloat();
-			stRotSample.q.z = GetFloat();
-			stRotSample.q.w = GetFloat();
+			v.x = GetFloat();
+			v.z = GetFloat();
+			v.y = GetFloat();
+			w = GetFloat();
+
+			D3DXQuaternionRotationAxis(&stRotSample.q, &v, w);
+
+			if (vecRotTrack.size() > 0)
+			{
+				D3DXQuaternionMultiply(&stRotSample.q, &vecRotTrack.back().q, &stRotSample.q);
+			}
 
 			vecRotTrack.push_back(stRotSample);
-			ZeroMemory(&stRotSample, sizeof(ST_POS_SAMPLE));
+			ZeroMemory(&stRotSample, sizeof(ST_ROT_SAMPLE));
 		}
 
 	} while (nLevel > 0);

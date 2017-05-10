@@ -27,6 +27,8 @@
 #include <string>
 #include <assert.h>
 #include <math.h>
+#include <mmsystem.h>
+#pragma comment(lib, "winmm.lib")
 
 using namespace std;
 

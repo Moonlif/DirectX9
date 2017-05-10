@@ -76,6 +76,8 @@ void cMainGame::Update()
 	//if (m_pCubeMan) m_pCubeMan->Update(m_pMap);
 
 	if (m_pCamera) m_pCamera->Update();
+
+	if (m_pRootFrame) m_pRootFrame->Update(m_pRootFrame->GetKeyFrame(), NULL);
 }
 
 void cMainGame::Render()
@@ -84,7 +86,7 @@ void cMainGame::Render()
 	g_pD3DDevice->BeginScene();
 	
 	if (m_pGrid) m_pGrid->Render();
-	if (m_pPyramid) m_pPyramid->Render();
+	//if (m_pPyramid) m_pPyramid->Render();
 
 	//Obj_Render();
 	//if (m_pCubeMan) m_pCubeMan->Render();

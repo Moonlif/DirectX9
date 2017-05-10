@@ -25,10 +25,11 @@ public:
 	void Destroy();
 	void CalcOriginalLocalTM(D3DXMATRIXA16* pmatParent);
 
-	DWORD	 m_dwFirstFrame;
-	DWORD	 m_dwLastFrame;
-	DWORD	 m_dwFrameSpeed;
-	DWORD	 m_dwTicksPerFrame;
+	DWORD	m_dwFirstFrame;
+	DWORD	m_dwLastFrame;
+	DWORD	m_dwFrameSpeed;
+	DWORD	m_dwTicksPerFrame;
+	DWORD	m_dwPreTime;
 
 	int GetKeyFrame();
 	void CalcLocalT(IN int nKeyFrame, OUT D3DXMATRIXA16& matT);
