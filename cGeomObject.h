@@ -18,3 +18,4 @@ public:
 	void Render();
 };
 
+//cFrame으로 대체함

@@ -12,7 +12,7 @@
 #include "cObjLoader.h"
 #include "cObjMap.h"
 
-#include "cGeomObject.h"
+#include "cFrame.h"
 #include "cAseLoader.h"
 
 cMainGame::cMainGame()
@@ -23,6 +23,7 @@ cMainGame::cMainGame()
 	, m_pCubeMan(NULL)
 	, m_pCubeMan2(NULL)
 	, m_pMap(NULL)
+	, m_pRootFrame(NULL)
 {	
 }
 
@@ -38,6 +39,8 @@ cMainGame::~cMainGame()
 
 	SAFE_RELEASE(m_pTexture);
 
+	m_pRootFrame->Destroy();
+
 	g_pDeviceManager->Destroy();
 	g_pTextureManager->Destroy();
 }
@@ -47,19 +50,19 @@ void cMainGame::Setup()
 	//texture test setting
 	//D3DXCreateTextureFromFile(g_pD3DDevice, "steam.png", &m_pTexture);
 
-	m_pCubeMan = new cCubeMan;
-	m_pCubeMan->Setup(false);
+	//m_pCubeMan = new cCubeMan;
+	//m_pCubeMan->Setup(false);
 
 	//cObjLoader loadObj;
 	//loadObj.Load(m_vecGroup, "objects", "Map.obj");
-	
 	//Load_Surface();
 
 	cAseLoader loadAse;
-	loadAse.Load(m_vecGeomObject, "objects/woman", "woman_01_all.ASE");
+	m_pRootFrame = loadAse.Load("woman/woman_01_all.ASE");
 
 	m_pCamera = new cCamera;
-	m_pCamera->Setup(&m_pCubeMan->GetPosition());
+	//m_pCamera->Setup(&m_pCubeMan->GetPosition());
+	m_pCamera->Setup(NULL);
 	m_pGrid = new cGrid;
 	m_pGrid->Setup(10, 10, 1);
 	m_pPyramid = new cPyramid;
@@ -83,15 +86,11 @@ void cMainGame::Render()
 	if (m_pGrid) m_pGrid->Render();
 	if (m_pPyramid) m_pPyramid->Render();
 
-	for each (auto p in m_vecGeomObject)
-	{
-		std::string name = p->GetName();
-		if (name[0] == 'B' && name[1] == 'i' &&name[2] == 'p') continue;
-		p->Render();
-	}
-
 	//Obj_Render();
 	//if (m_pCubeMan) m_pCubeMan->Render();
+
+	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
+	if (m_pRootFrame) m_pRootFrame->Render();
 
 	//texture test render
 	{

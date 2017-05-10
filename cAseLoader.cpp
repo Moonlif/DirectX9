@@ -2,9 +2,11 @@
 #include "cAseLoader.h"
 
 #include "Asciitok.h"
-#include "cGeomObject.h"
+#include "cMtlTex.h"
+#include "cFrame.h"
 
 cAseLoader::cAseLoader()
+	: m_fp(NULL)
 {
 }
 
@@ -13,308 +15,649 @@ cAseLoader::~cAseLoader()
 {
 }
 
-void cAseLoader::Load(OUT std::vector<cGeomObject*>& vecGeomObject, IN char * szFolder, IN char * szFile)
+cFrame * cAseLoader::Load(IN char * szFullPath)
 {
-	int count = 0;
-	//Scene
-	//string scene_Name;
-	//int scene_FirstFrame, scene_LastFrame, sceneFrameSpeed;
+	fopen_s(&m_fp, szFullPath, "r");
+	cFrame* pRoot = NULL;
 
-	//Material
-	m_vecMtlTex.clear();
+	while (char* szToken = GetToken())
+	{
+		if (IsEqual(szToken, ID_SCENE))
+		{
+			ProcessScene();
+		}
+		else if (IsEqual(szToken, ID_MATERIAL_LIST))
+		{
+			ProcessMATERIAL_LIST();
+		}
+		else if (IsEqual(szToken, ID_GEOMETRY))
+		{
+			cFrame* pFrame = ProcessGEOMOBJECT();
+			if (pRoot == NULL)
+			{
+				pRoot = pFrame;
+				Set_SceneFrame(pRoot);
+			}
+		}
+	}
+	fclose(m_fp);
 
-	//GeomObject
-	std::string sObjName;
-	std::string sObjParentName;
-	D3DXMATRIXA16 matWorld;
-	D3DXMatrixIdentity(&matWorld);
-	std::vector<int> vecFaceIndex;
-	std::vector<D3DXVECTOR3> vecV;
-	std::vector<D3DXVECTOR2> vecVT;
-	std::vector<D3DXVECTOR3> vecVN;
-	std::vector<ST_PNT_VERTEX> vecVertex;
-	int nMtlTexIndex = 0;
-	int nMtlNum = 0;
+	for each(auto p in m_vecMtlTex)
+	{
+		SAFE_RELEASE(p);
+	}
 
-	std::string sFullPath(szFolder);
-	sFullPath += (std::string("/") + std::string(szFile));
+	pRoot->CalcOriginalLocalTM(NULL);
+	return pRoot;
+}
 
-	FILE *fp;
-	fopen_s(&fp, sFullPath.c_str(), "r");
+char * cAseLoader::GetToken()
+{
+	int nReadCnt = 0;
+	bool isQuote = false;
 
 	while (true)
 	{
-		if (feof(fp))
+		char c = fgetc(m_fp);
+		if (feof(m_fp)) break;
+
+		if (c == '\"')
 		{
-			if (vecFaceIndex.empty() == false)
-			{
-				for (int i = 0; i < vecFaceIndex.size(); ++i)
-				{
-					vecVertex[i].p = vecV[vecFaceIndex[i]];
-					vecVertex[i].n = vecVN[vecFaceIndex[i]];
-				}
-
-				if (sObjParentName.empty() == false)
-				{
-					for each (auto it in vecGeomObject)
-					{
-						if (it->GetName() == sObjParentName)
-						{
-							D3DXMATRIXA16 tempMat;
-							D3DXMatrixInverse(&tempMat, NULL, &it->GetmatWorld());
-							matWorld = matWorld * tempMat;
-						}
-					}
-				}
-
-				cGeomObject* pGeomObj = new cGeomObject;
-				pGeomObj->SetName(sObjName);
-				pGeomObj->SetParentName(sObjParentName);
-				pGeomObj->SetmatWorld(matWorld);
-				pGeomObj->SetVertex(vecVertex);
-				pGeomObj->SetMtlTex(m_vecMtlTex[nMtlNum]);
-				vecGeomObject.push_back(pGeomObj);
-			}
-
-			sObjName.clear();
-			sObjParentName.clear();
-			D3DXMatrixIdentity(&matWorld);
-
-			vecFaceIndex.clear();
-			vecV.clear();
-			vecVT.clear();
-			vecVN.clear();
-			vecVertex.clear();
-			nMtlNum = 0;
-
-			break;
-		}
-
-		char szTemp[1024];
-		fgets(szTemp, 1024, fp);
-		char szTypeName[1024];
-		sscanf_s(szTemp, "%s", szTypeName, 1024);
-		string sTypeName = szTypeName;
-
-		if (sTypeName == "}") continue;
-
-		if (sTypeName == ID_SCENE)
-		{
+			if (isQuote) break;
+			isQuote = true;
 			continue;
 		}
-		else if (sTypeName == ID_MATERIAL_COUNT)
-		{
-			int Material_Count;
-			sscanf_s(szTemp, "%*s %d", &Material_Count);
-			m_vecMtlTex.resize(Material_Count);
-			
-			for (int i = 0; i < Material_Count; ++i)
-			{
-				m_vecMtlTex[i] = new cMtlTex;
-			}
-		}
-		else if (sTypeName == ID_MATERIAL)
-		{
-			sscanf_s(szTemp, "%*s %d", &nMtlTexIndex);
-		}
-		else if (sTypeName == ID_AMBIENT)
-		{
-			float r, g, b;
-			sscanf_s(szTemp, "%*s %f %f %f", &r, &g, &b);
-			m_vecMtlTex[nMtlTexIndex]->GetMaterial().Ambient.r = r;
-			m_vecMtlTex[nMtlTexIndex]->GetMaterial().Ambient.g = g;
-			m_vecMtlTex[nMtlTexIndex]->GetMaterial().Ambient.b = b;
-			m_vecMtlTex[nMtlTexIndex]->GetMaterial().Ambient.a = 1.0f;
-		}
-		else if (sTypeName == ID_DIFFUSE)
-		{
-			float r, g, b;
-			sscanf_s(szTemp, "%*s %f %f %f", &r, &g, &b);
-			m_vecMtlTex[nMtlTexIndex]->GetMaterial().Diffuse.r = r;
-			m_vecMtlTex[nMtlTexIndex]->GetMaterial().Diffuse.g = g;
-			m_vecMtlTex[nMtlTexIndex]->GetMaterial().Diffuse.b = b;
-			m_vecMtlTex[nMtlTexIndex]->GetMaterial().Diffuse.a = 1.0f;
-		}
-		else if (sTypeName == ID_SPECULAR)
-		{
-			float r, g, b;
-			sscanf_s(szTemp, "%*s %f %f %f", &r, &g, &b);
-			m_vecMtlTex[nMtlTexIndex]->GetMaterial().Specular.r = r;
-			m_vecMtlTex[nMtlTexIndex]->GetMaterial().Specular.g = g;
-			m_vecMtlTex[nMtlTexIndex]->GetMaterial().Specular.b = b;
-			m_vecMtlTex[nMtlTexIndex]->GetMaterial().Specular.a = 1.0f;
-		}
-		else if (sTypeName == ID_BITMAP)
-		{
-			char szTexFile[1024];
-			sscanf_s(szTemp, "%*s %s", szTexFile, 1024);
-			string sTexFile = szTexFile;
-			sTexFile.erase(0, 9);
-			sTexFile.pop_back();
-			string sTexFullPath = szFolder;
-			sTexFullPath += (std::string("/") + sTexFile);
 
-			LPDIRECT3DTEXTURE9 pTexture = g_pTextureManager->GetTexture(sTexFullPath);
-			m_vecMtlTex[nMtlTexIndex]->SetTexture(pTexture);
+		if (!isQuote && IsWhite(c))
+		{
+			if (nReadCnt == 0) continue;
+			else break;
 		}
 
-		else if (sTypeName == ID_GEOMETRY)
-		{
-			if (vecFaceIndex.empty() == false)
-			{
-				for (int i = 0; i < vecFaceIndex.size(); ++i)
-				{
-					vecVertex[i].p = vecV[vecFaceIndex[i]];
-					vecVertex[i].n = vecVN[vecFaceIndex[i]];
-				}
-
-				if (sObjParentName.empty() == false)
-				{
-					for each (auto it in vecGeomObject)
-					{
-						if (it->GetName() == sObjParentName)
-						{
-							D3DXMATRIXA16 tempMat;
-							D3DXMatrixInverse(&tempMat, NULL, &it->GetmatWorld());
-							matWorld = matWorld * tempMat;
-						}
-					}
-				}
-
-				cGeomObject* pGeomObj = new cGeomObject;
-				pGeomObj->SetName(sObjName);
-				pGeomObj->SetParentName(sObjParentName);
-				pGeomObj->SetmatWorld(matWorld);
-				pGeomObj->SetVertex(vecVertex);
-				pGeomObj->SetMtlTex(m_vecMtlTex[nMtlNum]);
-				vecGeomObject.push_back(pGeomObj);
-			}
-
-			sObjName.clear();
-			sObjParentName.clear();
-			D3DXMatrixIdentity(&matWorld);
-
-			vecFaceIndex.clear();
-			vecV.clear();
-			vecVT.clear();
-			vecVN.clear();
-			vecVertex.clear();
-			nMtlNum = 0;
-		}
-		else if (sTypeName == ID_NODE_NAME)
-		{
-			sObjName = std::string(szTemp).erase(0, sTypeName.size() + 4);
-			sObjName.pop_back();
-			sObjName.pop_back();
-		}
-		else if (sTypeName == ID_NODE_PARENT)
-		{
-			sObjParentName = std::string(szTemp).erase(0, sTypeName.size() + 3);
-			sObjParentName.pop_back();
-			sObjParentName.pop_back();
-		}
-		else if (sTypeName == ID_TM_ROW0)
-		{
-			float x, y, z;
-			sscanf_s(szTemp, "%*s %f %f %f", &x, &y, &z);
-			matWorld[0] = x;
-			matWorld[2] = y;
-			matWorld[1] = z;
-		}
-		else if (sTypeName == ID_TM_ROW1)
-		{
-			float x, y, z;
-			sscanf_s(szTemp, "%*s %f %f %f", &x, &y, &z);
-			matWorld[8] = x;
-			matWorld[10] = y;
-			matWorld[9] = z;
-		}
-		else if (sTypeName == ID_TM_ROW2)
-		{
-			float x, y, z;
-			sscanf_s(szTemp, "%*s %f %f %f", &x, &y, &z);
-			matWorld[4] = x;
-			matWorld[6] = y;
-			matWorld[5] = z;
-		}
-		else if (sTypeName == ID_TM_ROW3)
-		{
-			float x, y, z;
-			sscanf_s(szTemp, "%*s %f %f %f", &x, &y, &z);
-			matWorld[12] = x;
-			matWorld[14] = y;
-			matWorld[13] = z;
-		}
-
-		else if (sTypeName == ID_MESH_NUMVERTEX)
-		{
-			int Mesh_NumVertex = 0;
-			sscanf_s(szTemp, "%*s %d", &Mesh_NumVertex);
-			vecV.resize(Mesh_NumVertex);
-			vecVN.resize(Mesh_NumVertex);
-		}
-		else if (sTypeName == ID_MESH_NUMFACES)
-		{
-			int Mesh_NumFaces = 0;
-			sscanf_s(szTemp, "%*s %d", &Mesh_NumFaces);
-			vecVertex.resize(Mesh_NumFaces * 3);
-		}
-		else if (sTypeName == ID_MESH_VERTEX)
-		{
-			int nVertexIndex;
-			float x, y, z;
-			sscanf_s(szTemp, "%*s %d %f %f %f", &nVertexIndex, &x, &y, &z);
-			vecV[nVertexIndex].x = x;
-			vecV[nVertexIndex].y = z;
-			vecV[nVertexIndex].z = y;
-		}
-		else if (sTypeName == ID_MESH_FACE)
-		{
-			int nFaceIndex, p0, p1, p2;
-			sscanf_s(szTemp, "%*s %d %*c %*s %d %*s %d %*s %d", &nFaceIndex, &p0, &p1, &p2);
-			vecFaceIndex.push_back(p0);
-			vecFaceIndex.push_back(p2);
-			vecFaceIndex.push_back(p1);
-		}
-		else if (sTypeName == ID_MESH_NUMTVERTEX)
-		{
-			int Mesh_NumTVertex = 0;
-			sscanf_s(szTemp, "%*s %d", &Mesh_NumTVertex);
-			vecVT.resize(Mesh_NumTVertex);
-		}
-		else if (sTypeName == ID_MESH_TVERT)
-		{
-			int nTVertexIndex;
-			float u, v, w;
-			sscanf_s(szTemp, "%*s %d %f %f %f", &nTVertexIndex, &u, &v, &w);
-			vecVT[nTVertexIndex] = D3DXVECTOR2(u, 1.0 - v);
-		}
-		else if (sTypeName == ID_MESH_TFACE)
-		{
-			int nTFaceIndex, p0, p1, p2;
-			sscanf_s(szTemp, "%*s %d %d %d %d", &nTFaceIndex, &p0, &p1, &p2);
-			vecVertex[nTFaceIndex * 3 + 0].t = vecVT[p0];
-			vecVertex[nTFaceIndex * 3 + 1].t = vecVT[p2];
-			vecVertex[nTFaceIndex * 3 + 2].t = vecVT[p1];
-		}
-		else if (sTypeName == ID_MESH_VERTEXNORMAL)
-		{
-			int nNFaceIndex;
-			float x, y, z;
-			sscanf_s(szTemp, "%*s %d %f %f %f", &nNFaceIndex, &x, &y, &z);
-			vecVN[nNFaceIndex] = D3DXVECTOR3(x, z, y);
-		}
-		else if (sTypeName == ID_MATERIAL_REF)
-		{
-			sscanf_s(szTemp, "%*s %d", &nMtlNum);
-		}
+		m_szToken[nReadCnt++] = c;
 	}
 
-	fclose(fp);
+	if (nReadCnt == 0) return NULL;
 
-	for each(auto i in m_vecMtlTex)
+	m_szToken[nReadCnt] = '\0';
+
+	return m_szToken;
+}
+
+int cAseLoader::GetInteger()
+{
+	return atoi(GetToken());
+}
+
+float cAseLoader::GetFloat()
+{
+	return (float)atof(GetToken());
+}
+
+bool cAseLoader::IsWhite(IN char c)
+{
+	return c < 33;
+}
+
+bool cAseLoader::IsEqual(IN char * str1, IN char * str2)
+{
+	return strcmp(str1, str2) == 0;
+}
+
+void cAseLoader::SkipBlock()
+{
+	int nLevel = 0;
+	do
 	{
-		SAFE_RELEASE(i);
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+	} while (nLevel > 0);
+}
+
+
+void cAseLoader::ProcessScene()
+{
+	int nLevel = 0;
+	do
+	{
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+		else if (IsEqual(szToken, ID_FIRSTFRAME))
+		{
+			m_dwFirstFrame = GetInteger();
+		}
+		else if (IsEqual(szToken, ID_LASTFRAME))
+		{
+			m_dwLastFrame = GetInteger();
+		}
+		else if (IsEqual(szToken, ID_FRAMESPEED))
+		{
+			m_dwFrameSpeed = GetInteger();
+		}
+		else if (IsEqual(szToken, ID_TICKSPERFRAME))
+		{
+			m_dwTicksPerFrame = GetInteger();
+		}
+
+	} while (nLevel > 0);
+}
+
+void cAseLoader::ProcessMATERIAL_LIST()
+{
+	int nLevel = 0;
+	do
+	{
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+		else if (IsEqual(szToken, ID_MATERIAL_COUNT))
+		{
+			for each(auto p in m_vecMtlTex)
+			{
+				SAFE_RELEASE(p);
+			}
+			m_vecMtlTex.resize(GetInteger());
+		}
+		else if (IsEqual(szToken, ID_MATERIAL))
+		{
+			int nIndex = GetInteger();
+			m_vecMtlTex[nIndex] = new cMtlTex;
+			ProcessMATERIAL(m_vecMtlTex[nIndex]);
+		}
+	} while (nLevel > 0);
+}
+
+void cAseLoader::ProcessMATERIAL(OUT cMtlTex * pMtlTex)
+{
+	D3DMATERIAL9 stMtl;
+	ZeroMemory(&stMtl, sizeof(D3DMATERIAL9));
+
+	int nLevel = 0;
+	do
+	{
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+		else if (IsEqual(szToken, ID_AMBIENT))
+		{
+			stMtl.Ambient.r = GetFloat();
+			stMtl.Ambient.g = GetFloat();
+			stMtl.Ambient.b = GetFloat();
+			stMtl.Ambient.a = 1.0f;
+		}
+		else if (IsEqual(szToken, ID_DIFFUSE))
+		{
+			stMtl.Diffuse.r = GetFloat();
+			stMtl.Diffuse.g = GetFloat();
+			stMtl.Diffuse.b = GetFloat();
+			stMtl.Diffuse.a = 1.0f;
+		}
+		else if (IsEqual(szToken, ID_SPECULAR))
+		{
+			stMtl.Specular.r = GetFloat();
+			stMtl.Specular.g = GetFloat();
+			stMtl.Specular.b = GetFloat();
+			stMtl.Specular.a = 1.0f;
+		}
+		else if (IsEqual(szToken, ID_MAP_DIFFUSE))
+		{
+			ProcessMAP_DIFFUSE(pMtlTex);
+		}
+	} while (nLevel > 0);
+
+	pMtlTex->SetMaterial(stMtl);
+}
+
+void cAseLoader::ProcessMAP_DIFFUSE(OUT cMtlTex * pMtlTex)
+{
+	int nLevel = 0;
+	do
+	{
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+		else if (IsEqual(szToken, ID_BITMAP))
+		{
+			szToken = GetToken();
+			pMtlTex->SetTexture(g_pTextureManager->GetTexture(szToken));
+		}
+	} while (nLevel > 0);
+}
+
+
+cFrame * cAseLoader::ProcessGEOMOBJECT()
+{
+	cFrame* pFrame = new cFrame;
+	int nLevel = 0;
+	do
+	{
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+		else if (IsEqual(szToken, ID_NODE_NAME))
+		{
+			m_mapFrame[GetToken()] = pFrame;
+		}
+		else if (IsEqual(szToken, ID_NODE_PARENT))
+		{
+			m_mapFrame[GetToken()]->AddChild(pFrame);
+		}
+		else if (IsEqual(szToken, ID_NODE_TM))
+		{
+			ProcessNODE_TM(pFrame);
+		}
+		else if (IsEqual(szToken, ID_MESH))
+		{
+			ProcessMESH(pFrame);
+		}
+		else if (IsEqual(szToken, ID_TM_ANIMATION))
+		{
+			ProcessTM_ANIMATION(pFrame);
+		}
+		else if (IsEqual(szToken, ID_MATERIAL_REF))
+		{
+			int nMtlIndex = GetInteger();
+			pFrame->SetMtlTex(m_vecMtlTex[nMtlIndex]);
+		}
+	} while (nLevel > 0);
+
+	return pFrame;
+}
+
+void cAseLoader::ProcessNODE_TM(OUT cFrame * pFrame)
+{
+	D3DXMATRIXA16 matWorld;
+	D3DXMatrixIdentity(&matWorld);
+
+	int nLevel = 0;
+	do
+	{
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+		else if (IsEqual(szToken, ID_TM_ROW0))
+		{
+			matWorld._11 = GetFloat();
+			matWorld._13 = GetFloat();
+			matWorld._12 = GetFloat();
+			matWorld._14 = 0.0f;
+		}
+		else if (IsEqual(szToken, ID_TM_ROW1))
+		{
+			matWorld._31 = GetFloat();
+			matWorld._33 = GetFloat();
+			matWorld._32 = GetFloat();
+			matWorld._34 = 0.0f;
+		}
+		else if (IsEqual(szToken, ID_TM_ROW2))
+		{
+			matWorld._21 = GetFloat();
+			matWorld._23 = GetFloat();
+			matWorld._22 = GetFloat();
+			matWorld._24 = 0.0f;
+		}
+		else if (IsEqual(szToken, ID_TM_ROW3))
+		{
+			matWorld._41 = GetFloat();
+			matWorld._43 = GetFloat();
+			matWorld._42 = GetFloat();
+			matWorld._44 = 1.0f;
+		}
+
+	} while (nLevel > 0);
+
+	pFrame->SetWorldTM(matWorld);
+}
+
+
+void cAseLoader::ProcessMESH(OUT cFrame * pFrame)
+{
+	std::vector<D3DXVECTOR3> vecV;
+	std::vector<D3DXVECTOR2> vecVT;
+	std::vector<ST_PNT_VERTEX> vecVertex;
+
+	int nLevel = 0;
+	do
+	{
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+		else if (IsEqual(szToken, ID_MESH_NUMVERTEX))
+		{
+			vecV.resize(GetInteger());
+		}
+		else if (IsEqual(szToken, ID_MESH_NUMFACES))
+		{
+			vecVertex.resize(GetInteger() * 3);
+		}
+		else if (IsEqual(szToken, ID_MESH_VERTEX_LIST))
+		{
+			ProcessMESH_VERTEX_LIST(vecV);
+		}
+		else if (IsEqual(szToken, ID_MESH_FACE_LIST))
+		{
+			ProcessMESH_FACE_LIST(vecVertex, vecV);
+		}
+		else if (IsEqual(szToken, ID_MESH_NUMTVERTEX))
+		{
+			vecVT.resize(GetInteger());
+		}
+		else if (IsEqual(szToken, ID_MESH_TVERTLIST))
+		{
+			ProcessMESH_TVERT_LIST(vecVT);
+		}
+		else if (IsEqual(szToken, ID_MESH_TFACELIST))
+		{
+			ProcessMESH_TFACE_LIST(vecVertex, vecVT);
+		}
+		else if (IsEqual(szToken, ID_MESH_NORMALS))
+		{
+			ProcessMESH_NORMALS(vecVertex);
+		}
+	} while (nLevel > 0);
+
+	D3DXMATRIXA16 matInvWorld;
+	D3DXMatrixInverse(&matInvWorld, 0, &pFrame->GetWorldTM());
+	for (size_t i = 0; i < vecVertex.size(); i++)
+	{
+		D3DXVec3TransformCoord(&vecVertex[i].p, &vecVertex[i].p, &matInvWorld);
+		D3DXVec3TransformNormal(&vecVertex[i].n, &vecVertex[i].n, &matInvWorld);
 	}
-	m_vecMtlTex.clear();
+	pFrame->SetVertex(vecVertex);
+}
+
+void cAseLoader::ProcessMESH_VERTEX_LIST(OUT std::vector<D3DXVECTOR3>& vecV)
+{
+	int nLevel = 0;
+	do
+	{
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+		else if (IsEqual(szToken, ID_MESH_VERTEX))
+		{
+			int nIndex = GetInteger();
+			vecV[nIndex].x = GetFloat();
+			vecV[nIndex].z = GetFloat();
+			vecV[nIndex].y = GetFloat();
+		}
+
+	} while (nLevel > 0);
+}
+
+void cAseLoader::ProcessMESH_FACE_LIST(OUT std::vector<ST_PNT_VERTEX>& vecVertex, IN std::vector<D3DXVECTOR3> vecV)
+{
+	int nLevel = 0;
+	do
+	{
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+		else if (IsEqual(szToken, ID_MESH_FACE))
+		{
+			int nFaceIndex = GetInteger();
+			GetToken();
+			vecVertex[nFaceIndex * 3 + 0].p = vecV[GetInteger()];
+			GetToken();
+			vecVertex[nFaceIndex * 3 + 2].p = vecV[GetInteger()];
+			GetToken();
+			vecVertex[nFaceIndex * 3 + 1].p = vecV[GetInteger()];
+		}
+
+	} while (nLevel > 0);
+}
+
+void cAseLoader::ProcessMESH_TVERT_LIST(OUT std::vector<D3DXVECTOR2>& vecVT)
+{
+	int nLevel = 0;
+	do
+	{
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+		else if (IsEqual(szToken, ID_MESH_TVERT))
+		{
+			int nIndex = GetInteger();
+			vecVT[nIndex].x = GetFloat();
+			vecVT[nIndex].y = 1.0f - GetFloat();
+		}
+
+	} while (nLevel > 0);
+}
+
+void cAseLoader::ProcessMESH_TFACE_LIST(OUT std::vector<ST_PNT_VERTEX>& vecVertex, IN std::vector<D3DXVECTOR2>& vecVT)
+{
+	int nLevel = 0;
+	do
+	{
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+		else if (IsEqual(szToken, ID_MESH_TFACE))
+		{
+			int nFaceIndex = GetInteger();
+			vecVertex[nFaceIndex * 3 + 0].t = vecVT[GetInteger()];
+			vecVertex[nFaceIndex * 3 + 2].t = vecVT[GetInteger()];
+			vecVertex[nFaceIndex * 3 + 1].t = vecVT[GetInteger()];
+		}
+
+	} while (nLevel > 0);
+}
+
+void cAseLoader::ProcessMESH_NORMALS(OUT std::vector<ST_PNT_VERTEX>& vecVertex)
+{
+	int nFaceIndex = 0;
+	int aModIndex[3] = { 0, 2, 1 };
+	int nModCount = 0;
+
+	int nLevel = 0;
+	do
+	{
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+		else if (IsEqual(szToken, ID_MESH_FACENORMAL))
+		{
+			nFaceIndex = GetInteger();
+			nModCount = 0;
+		}
+		else if (IsEqual(szToken, ID_MESH_VERTEXNORMAL))
+		{
+			GetToken();
+			D3DXVECTOR3 n;
+			n.x = GetFloat();
+			n.z = GetFloat();
+			n.y = GetFloat();
+			vecVertex[nFaceIndex * 3 + aModIndex[nModCount++]].n = n;
+		}
+
+	} while (nLevel > 0);
+}
+
+
+void cAseLoader::ProcessTM_ANIMATION(OUT cFrame * pFrame)
+{
+	int nLevel = 0;
+	do
+	{
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+		else if (IsEqual(szToken, ID_POS_TRACK))
+		{
+			ProcessCONTROL_POS_TRACK(pFrame);
+		}
+		else if (IsEqual(szToken, ID_ROT_TRACK))
+		{
+			ProcessCONTROL_ROT_TRACK(pFrame);
+		}
+
+	} while (nLevel > 0);
+}
+
+void cAseLoader::ProcessCONTROL_POS_TRACK(OUT cFrame * pFrame)
+{
+	ST_POS_SAMPLE stPosSample;
+	ZeroMemory(&stPosSample, sizeof(ST_POS_SAMPLE));
+
+	std::vector<ST_POS_SAMPLE> vecPosTrack;
+	vecPosTrack = pFrame->GetPosTrack();
+
+	int nLevel = 0;
+	do
+	{
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+		else if (IsEqual(szToken, ID_POS_SAMPLE))
+		{
+			stPosSample.n = GetInteger();
+			stPosSample.v.x = GetFloat();
+			stPosSample.v.y = GetFloat();
+			stPosSample.v.z = GetFloat();
+
+			vecPosTrack.push_back(stPosSample);
+			ZeroMemory(&stPosSample, sizeof(ST_POS_SAMPLE));
+		}
+
+	} while (nLevel > 0);
+
+	pFrame->SetPosTrack(vecPosTrack);
+}
+
+void cAseLoader::ProcessCONTROL_ROT_TRACK(OUT cFrame * pFrame)
+{
+	ST_ROT_SAMPLE stRotSample;
+	ZeroMemory(&stRotSample, sizeof(ST_ROT_SAMPLE));
+
+	std::vector<ST_ROT_SAMPLE> vecRotTrack;
+	vecRotTrack = pFrame->GetRotTrack();
+
+	int nLevel = 0;
+	do
+	{
+		char* szToken = GetToken();
+		if (IsEqual(szToken, "{"))
+		{
+			++nLevel;
+		}
+		else if (IsEqual(szToken, "}"))
+		{
+			--nLevel;
+		}
+		else if (IsEqual(szToken, ID_ROT_SAMPLE))
+		{
+			stRotSample.n = GetInteger();
+			stRotSample.q.x = GetFloat();
+			stRotSample.q.y = GetFloat();
+			stRotSample.q.z = GetFloat();
+			stRotSample.q.w = GetFloat();
+
+			vecRotTrack.push_back(stRotSample);
+			ZeroMemory(&stRotSample, sizeof(ST_POS_SAMPLE));
+		}
+
+	} while (nLevel > 0);
+
+	pFrame->SetRotTrack(vecRotTrack);
+}
+
+void cAseLoader::Set_SceneFrame(OUT cFrame * pRoot)
+{
+	pRoot->m_dwFirstFrame = m_dwFirstFrame;
+	pRoot->m_dwLastFrame = m_dwLastFrame;
+	pRoot->m_dwFrameSpeed = m_dwFrameSpeed;
+	pRoot->m_dwTicksPerFrame = m_dwTicksPerFrame;
 }

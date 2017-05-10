@@ -9,8 +9,7 @@ class cCubeMan;
 
 class cGroup;
 class iMap;
-
-class cGeomObject;
+class cFrame;
 
 class cMainGame
 {
@@ -27,12 +26,12 @@ private:
 	cPyramid*		m_pPyramid;
 	
 	vector<cGroup*> m_vecGroup;
-	iMap* m_pMap;
-	vector<cGeomObject*> m_vecGeomObject;
+	iMap*			m_pMap;
+	cFrame*			m_pRootFrame;
 
 	//texture test
-	LPDIRECT3DTEXTURE9 m_pTexture;
-	std::vector<ST_PT_VERTEX> m_vecVertex;
+	LPDIRECT3DTEXTURE9			m_pTexture;
+	std::vector<ST_PT_VERTEX>	m_vecVertex;
 
 public:
 	void Setup();
