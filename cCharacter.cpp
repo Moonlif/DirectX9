@@ -71,7 +71,7 @@ void cCharacter::Update(iMap* pMap)
 	D3DXVECTOR3 vPosition = m_vPosition;
 	if (GetKeyState('W') & 0x8000)
 	{
-		vPosition = m_vPosition + m_vDirection * 0.1f;
+		vPosition = m_vPosition + m_vDirection * 0.05f;
 
 		//if (FloorIntersect() - m_vPosition.y > 0.1f) m_vPosition = m_vPosition - m_vDirection * 0.1f;
 		//if (WallIntersect(true) < 0.2f) m_vPosition = m_vPosition - m_vDirection * 0.1f;
@@ -80,7 +80,7 @@ void cCharacter::Update(iMap* pMap)
 	}
 	else if (GetKeyState('S') & 0x8000)
 	{
-		vPosition = m_vPosition - m_vDirection * 0.1f;
+		vPosition = m_vPosition - m_vDirection * 0.5f;
 
 		//if (FloorIntersect() - m_vPosition.y > 0.1f) m_vPosition = m_vPosition + m_vDirection * 0.1f;
 		//if (WallIntersect(false) < 0.2f) m_vPosition = m_vPosition + m_vDirection * 0.1f;
@@ -101,13 +101,14 @@ void cCharacter::Update(iMap* pMap)
 			m_vPosition = vPosition;
 		}
 	}
+	else m_vPosition = vPosition;
 
 	D3DXMATRIXA16 matT;
 	D3DXMatrixTranslation(&matT, m_vPosition.x, m_vPosition.y, m_vPosition.z);
 
 	m_matWorld = matR * matT;
 
-	m_vDirection = D3DXVECTOR3(0, 0, 1);
+	m_vDirection = D3DXVECTOR3(0, 0, -1);
 	D3DXVec3TransformNormal(&m_vDirection, &m_vDirection, &matRY);
 	D3DXVec3Normalize(&m_vDirection, &m_vDirection);
 

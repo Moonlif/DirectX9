@@ -76,6 +76,7 @@ void cGrid::Render()
 	D3DXMATRIXA16 mat;
 	D3DXMatrixIdentity(&mat);
 	g_pD3DDevice->SetTransform(D3DTS_WORLD, &mat);
+	g_pD3DDevice->SetTexture(0, NULL);
 	g_pD3DDevice->SetFVF(ST_PC_VERTEX::FVF);
 
 	g_pD3DDevice->DrawPrimitiveUP(D3DPT_LINELIST, m_vecVertex.size() / 2, &m_vecVertex[0], sizeof(ST_PC_VERTEX));

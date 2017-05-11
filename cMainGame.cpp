@@ -14,6 +14,7 @@
 
 #include "cFrame.h"
 #include "cAseLoader.h"
+#include "cWoman.h"
 
 cMainGame::cMainGame()
 	: m_pCubePC(NULL)
@@ -24,6 +25,7 @@ cMainGame::cMainGame()
 	, m_pCubeMan2(NULL)
 	, m_pMap(NULL)
 	, m_pRootFrame(NULL)
+	, m_pWoman(NULL)
 {	
 }
 
@@ -39,7 +41,8 @@ cMainGame::~cMainGame()
 
 	SAFE_RELEASE(m_pTexture);
 
-	m_pRootFrame->Destroy();
+	if (m_pRootFrame) m_pRootFrame->Destroy();
+	SAFE_DELETE(m_pWoman);
 
 	g_pDeviceManager->Destroy();
 	g_pTextureManager->Destroy();
@@ -57,12 +60,17 @@ void cMainGame::Setup()
 	//loadObj.Load(m_vecGroup, "objects", "Map.obj");
 	//Load_Surface();
 
-	cAseLoader loadAse;
-	m_pRootFrame = loadAse.Load("woman/woman_01_all.ASE");
+	//cAseLoader loadAse;
+	//m_pRootFrame = loadAse.Load("woman/woman_01_all_stand.ASE");
+
+	m_pWoman = new cWoman;
+	m_pWoman->Setup();
 
 	m_pCamera = new cCamera;
 	//m_pCamera->Setup(&m_pCubeMan->GetPosition());
-	m_pCamera->Setup(NULL);
+	//m_pCamera->Setup(NULL);
+	m_pCamera->Setup(&m_pWoman->GetPosition());
+
 	m_pGrid = new cGrid;
 	m_pGrid->Setup(10, 10, 1);
 	m_pPyramid = new cPyramid;
@@ -77,22 +85,26 @@ void cMainGame::Update()
 
 	if (m_pCamera) m_pCamera->Update();
 
-	if (m_pRootFrame) m_pRootFrame->Update(m_pRootFrame->GetKeyFrame(), NULL);
+	//if (m_pRootFrame) m_pRootFrame->Update(m_pRootFrame->GetKeyFrame(), NULL);
+
+	m_pWoman->Update(NULL);
 }
 
 void cMainGame::Render()
 {
 	g_pD3DDevice->Clear(NULL, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(100,100,100), 1.0f, 0);
 	g_pD3DDevice->BeginScene();
-	
+
+	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
+
 	if (m_pGrid) m_pGrid->Render();
 	//if (m_pPyramid) m_pPyramid->Render();
 
 	//Obj_Render();
 	//if (m_pCubeMan) m_pCubeMan->Render();
 
-	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
-	if (m_pRootFrame) m_pRootFrame->Render();
+	//if (m_pRootFrame) m_pRootFrame->Render();
+	m_pWoman->Render();
 
 	//texture test render
 	{

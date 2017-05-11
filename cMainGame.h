@@ -11,6 +11,8 @@ class cGroup;
 class iMap;
 class cFrame;
 
+class cWoman;
+
 class cMainGame
 {
 public:
@@ -28,6 +30,7 @@ private:
 	vector<cGroup*> m_vecGroup;
 	iMap*			m_pMap;
 	cFrame*			m_pRootFrame;
+	cWoman*			m_pWoman;
 
 	//texture test
 	LPDIRECT3DTEXTURE9			m_pTexture;

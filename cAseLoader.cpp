@@ -583,11 +583,7 @@ void cAseLoader::ProcessTM_ANIMATION(OUT cFrame * pFrame)
 
 void cAseLoader::ProcessCONTROL_POS_TRACK(OUT cFrame * pFrame)
 {
-	ST_POS_SAMPLE stPosSample;
-	ZeroMemory(&stPosSample, sizeof(ST_POS_SAMPLE));
-
 	std::vector<ST_POS_SAMPLE> vecPosTrack;
-	vecPosTrack = pFrame->GetPosTrack();
 
 	int nLevel = 0;
 	do
@@ -603,13 +599,15 @@ void cAseLoader::ProcessCONTROL_POS_TRACK(OUT cFrame * pFrame)
 		}
 		else if (IsEqual(szToken, ID_POS_SAMPLE))
 		{
+			ST_POS_SAMPLE stPosSample;
+			ZeroMemory(&stPosSample, sizeof(ST_POS_SAMPLE));
+
 			stPosSample.n = GetInteger();
 			stPosSample.v.x = GetFloat();
 			stPosSample.v.z = GetFloat();
 			stPosSample.v.y = GetFloat();
 
 			vecPosTrack.push_back(stPosSample);
-			ZeroMemory(&stPosSample, sizeof(ST_POS_SAMPLE));
 		}
 
 	} while (nLevel > 0);
@@ -619,11 +617,7 @@ void cAseLoader::ProcessCONTROL_POS_TRACK(OUT cFrame * pFrame)
 
 void cAseLoader::ProcessCONTROL_ROT_TRACK(OUT cFrame * pFrame)
 {
-	ST_ROT_SAMPLE stRotSample;
-	ZeroMemory(&stRotSample, sizeof(ST_ROT_SAMPLE));
-
 	std::vector<ST_ROT_SAMPLE> vecRotTrack;
-	vecRotTrack = pFrame->GetRotTrack();
 
 	int nLevel = 0;
 	do
@@ -639,6 +633,9 @@ void cAseLoader::ProcessCONTROL_ROT_TRACK(OUT cFrame * pFrame)
 		}
 		else if (IsEqual(szToken, ID_ROT_SAMPLE))
 		{
+			ST_ROT_SAMPLE stRotSample;
+			ZeroMemory(&stRotSample, sizeof(ST_ROT_SAMPLE));
+
 			D3DXVECTOR3 v;
 			float w;
 
@@ -649,14 +646,20 @@ void cAseLoader::ProcessCONTROL_ROT_TRACK(OUT cFrame * pFrame)
 			w = GetFloat();
 
 			D3DXQuaternionRotationAxis(&stRotSample.q, &v, w);
+			/*=
+			x *= sinf(w/2.0f);
+			y *= sinf(w/2.0f);
+			z *= sinf(w/2.0f);
+			w = cosf(w/2.0f);
+			*/
 
 			if (vecRotTrack.size() > 0)
 			{
 				D3DXQuaternionMultiply(&stRotSample.q, &vecRotTrack.back().q, &stRotSample.q);
+				//= stRotSample.q = vecRotTrack.back().q * stRotSample.q;
 			}
 
 			vecRotTrack.push_back(stRotSample);
-			ZeroMemory(&stRotSample, sizeof(ST_ROT_SAMPLE));
 		}
 
 	} while (nLevel > 0);

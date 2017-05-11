@@ -23,23 +23,11 @@ cFrame::~cFrame()
 void cFrame::Update(int nKeyFrame, D3DXMATRIXA16 * pmatParent)
 {
 	D3DXMATRIXA16 matR, matT;
-	{
-		D3DXMatrixIdentity(&matR);
-		matR = m_matLocalTM;
-		matR._41 = 0.0f;
-		matR._42 = 0.0f;
-		matR._43 = 0.0f;
-		matR._44 = 1.0f;
-		CalcLocalR(nKeyFrame, matR);
+	CalcLocalR(nKeyFrame, matR);
+	CalcLocalT(nKeyFrame, matT);
 
-		D3DXMatrixIdentity(&matT);
-		matT._41 = m_matLocalTM._41;
-		matT._42 = m_matLocalTM._42;
-		matT._43 = m_matLocalTM._43;
-		CalcLocalT(nKeyFrame, matT);
-	}
-
-	m_matWorldTM = matR * matT;
+	m_matLocalTM = matR * matT;
+	m_matWorldTM = m_matLocalTM;
 
 	if (pmatParent)
 	{
@@ -98,7 +86,9 @@ void cFrame::CalcOriginalLocalTM(D3DXMATRIXA16 * pmatParent)
 
 int cFrame::GetKeyFrame()
 {
-	DWORD time = timeGetTime();
+	int ratio = 3;
+
+	DWORD time = timeGetTime() * ratio;
 
 	DWORD firstTime = m_dwFirstFrame * m_dwTicksPerFrame;
 	DWORD lastTime = m_dwLastFrame * m_dwTicksPerFrame;
@@ -119,16 +109,25 @@ int cFrame::GetKeyFrame()
 
 void cFrame::CalcLocalT(IN int nKeyFrame, OUT D3DXMATRIXA16 & matT)
 {
-	if (m_vecPosTrack.size() == 0) return;
+	D3DXMatrixIdentity(&matT);
+
+	if (m_vecPosTrack.size() == 0)
+	{
+		matT._41 = m_matLocalTM._41;
+		matT._42 = m_matLocalTM._42;
+		matT._43 = m_matLocalTM._43;
+
+		return;
+	}
 
 	int count = 0;
-	int n1 = 0;
-	int n2 = 0;
+	int n1 = -1;
+	int n2 = -1;
 
-	for (int i = 0; i < m_vecPosTrack.size(); i++)
+	for (int i = 0; i < m_vecPosTrack.size(); ++i)
 	{
-		if (n1 == 0) n1 = m_vecPosTrack[i].n;
-		else if (n2 == 0) n2 = m_vecPosTrack[i].n;
+		if (n1 == -1) n1 = m_vecPosTrack[i].n;
+		else if (n2 == -1) n2 = m_vecPosTrack[i].n;
 		else
 		{
 			n1 = n2;
@@ -142,7 +141,12 @@ void cFrame::CalcLocalT(IN int nKeyFrame, OUT D3DXMATRIXA16 & matT)
 		}
 	}
 
-	if (count == 0)
+	if (count == 0 && m_vecPosTrack.front().n >= nKeyFrame)
+	{
+		D3DXVECTOR3 vPos = m_vecPosTrack.front().v;
+		D3DXMatrixTranslation(&matT, vPos.x, vPos.y, vPos.z);
+	}
+	else if (count == 0 && m_vecPosTrack.back().n <= nKeyFrame)
 	{
 		D3DXVECTOR3 vPos = m_vecPosTrack.back().v;
 		D3DXMatrixTranslation(&matT, vPos.x, vPos.y, vPos.z);
@@ -159,16 +163,25 @@ void cFrame::CalcLocalT(IN int nKeyFrame, OUT D3DXMATRIXA16 & matT)
 
 void cFrame::CalcLocalR(IN int nKeyFrame, OUT D3DXMATRIXA16 & matR)
 {
-	if (m_vecRotTrack.size() == 0) return;
+	D3DXMatrixIdentity(&matR);
+
+	if (m_vecRotTrack.size() == 0)
+	{
+		matR = m_matLocalTM;
+		matR._41 = 0.0f;
+		matR._42 = 0.0f;
+		matR._43 = 0.0f;
+		return;
+	}
 
 	int count = 0;
-	int n1 = 0;
-	int n2 = 0;
+	int n1 = -1;
+	int n2 = -1;
 
-	for (int i = 0; i < m_vecRotTrack.size(); i++)
+	for (int i = 0; i < m_vecRotTrack.size(); ++i)
 	{
-		if (n1 == 0) n1 = m_vecRotTrack[i].n;
-		else if (n2 == 0) n2 = m_vecRotTrack[i].n;
+		if (n1 == -1) n1 = m_vecRotTrack[i].n;
+		else if (n2 == -1) n2 = m_vecRotTrack[i].n;
 		else
 		{
 			n1 = n2;
@@ -182,7 +195,11 @@ void cFrame::CalcLocalR(IN int nKeyFrame, OUT D3DXMATRIXA16 & matR)
 		}
 	}
 
-	if (count == 0)
+	if (count == 0 && m_vecRotTrack.front().n >= nKeyFrame)
+	{
+		D3DXMatrixRotationQuaternion(&matR, &m_vecRotTrack.front().q);
+	}
+	else if (count == 0 && m_vecRotTrack.back().n <= nKeyFrame)
 	{
 		D3DXMatrixRotationQuaternion(&matR, &m_vecRotTrack.back().q);
 	}
