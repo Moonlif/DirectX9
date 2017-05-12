@@ -20,6 +20,8 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 HWND g_hWnd;
 cMainGame* g_pMainGame;
+int g_nFps;
+int g_nCountFps;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -48,6 +50,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	g_pMainGame->Setup();
 
     MSG msg;
+	SetTimer(g_hWnd, 0, 1000, NULL);
 
     // 기본 메시지 루프입니다.
     while (true)
@@ -73,6 +76,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		{
 			g_pMainGame->Update();
 			g_pMainGame->Render();
+			g_nCountFps++;
 		}
     }
 
@@ -155,6 +159,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
     switch (message)
     {
+	case WM_TIMER:
+		g_nFps = g_nCountFps;
+		g_nCountFps = 0;
+		break;
+
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE) ::DestroyWindow(hWnd);
 		break;

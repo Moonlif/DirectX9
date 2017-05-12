@@ -20,7 +20,7 @@ private:
 
 public:
 	void Update(int nKeyFrame, D3DXMATRIXA16* pmatParent);
-	void Render();
+	void Render(bool useVertexBuffer, bool useIndexBuffer);
 	void AddChild(cFrame* pChild);
 	void Destroy();
 	void CalcOriginalLocalTM(D3DXMATRIXA16* pmatParent);

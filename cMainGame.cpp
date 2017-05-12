@@ -28,6 +28,11 @@ cMainGame::cMainGame()
 	, m_pWoman(NULL)
 	, m_pFont(NULL)
 	, m_p3DText(NULL)
+	, m_nTick1(0)
+	, m_nTick2(0)
+	, m_nTick3(0)
+	, m_nTick4(0)
+	, m_dwRenderTime(0)
 {	
 }
 
@@ -42,6 +47,8 @@ cMainGame::~cMainGame()
 	SAFE_DELETE(m_pMap);
 	SAFE_DELETE(m_pWoman);
 
+	if (m_pRootFrame) m_pRootFrame->Destroy();
+
 	//font
 	SAFE_RELEASE(m_pFont);
 	SAFE_RELEASE(m_p3DText);
@@ -49,11 +56,8 @@ cMainGame::~cMainGame()
 	//texture test
 	SAFE_RELEASE(m_pTexture);
 
-	if (m_pRootFrame) m_pRootFrame->Destroy();
-
-
-	g_pDeviceManager->Destroy();
 	g_pTextureManager->Destroy();
+	g_pDeviceManager->Destroy();
 }
 
 void cMainGame::Setup()
@@ -97,22 +101,35 @@ void cMainGame::Update()
 
 	//if (m_pRootFrame) m_pRootFrame->Update(m_pRootFrame->GetKeyFrame(), NULL);
 
-	m_pWoman->Update(NULL);
+	if (m_pWoman) m_pWoman->Update(NULL);
 }
 
 void cMainGame::Render()
 {
-	g_pD3DDevice->Clear(NULL, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(100,100,100), 1.0f, 0);
+	g_pD3DDevice->Clear(NULL, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(100, 100, 100), 1.0f, 0);
 	g_pD3DDevice->BeginScene();
 
 	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
 
-	//for (int i = 0; i < 100; ++i)
-	{
-		if (m_pGrid) m_pGrid->Render();
-		if (m_pWoman) m_pWoman->Render();
-	}
-	
+	if (m_pGrid) m_pGrid->Render();
+
+	//if (m_nTick1 == 0) 
+		m_nTick1 = GetTickCount();
+	//default render
+	if (m_pWoman) m_pWoman->Render(false, false);
+	//if (m_nTick2 == 0) 
+		m_nTick2 = GetTickCount();
+
+	//using vertexBuffer
+	if (m_pWoman) m_pWoman->Render(true, false);
+	//if (m_nTick3 == 0) 
+		m_nTick3 = GetTickCount();
+
+	//using indexBuffer
+	//if (m_pWoman) m_pWoman->Render(false, true);
+	//if (m_nTick4 == 0) 
+		m_nTick4 = GetTickCount();
+
 	//if (m_pPyramid) m_pPyramid->Render();
 	//Obj_Render();
 	//if (m_pCubeMan) m_pCubeMan->Render();
@@ -249,7 +266,7 @@ void cMainGame::Load_Surface()
 //font
 void cMainGame::Create_Font()
 {
-	//case 1:
+	//case 1: 2D
 	{
 		D3DXFONT_DESC fontDiscription;
 		ZeroMemory(&fontDiscription, sizeof(D3DXFONT_DESC));
@@ -267,28 +284,28 @@ void cMainGame::Create_Font()
 		D3DXCreateFontIndirect(g_pD3DDevice, &fontDiscription, &m_pFont);
 	}
 
-	//case 2:
+	//case 2: 3D
 	{
-		HDC hdc = CreateCompatibleDC(0);
-		LOGFONT lf;
-		ZeroMemory(&lf, sizeof(LOGFONT));
-		lf.lfHeight = 25;
-		lf.lfWidth = 12;
-		lf.lfWeight = 500;	//0~1000 
-		lf.lfItalic = false;
-		lf.lfUnderline = false;
-		lf.lfStrikeOut = false;
-		lf.lfCharSet = DEFAULT_CHARSET;
-		strcpy_s(lf.lfFaceName, "굴림체");
-		
-		HFONT hFont;
-		HFONT hFontOld;
-		hFont = CreateFontIndirect(&lf);
-		hFontOld = (HFONT)SelectObject(hdc, hFont);
-		D3DXCreateText(g_pD3DDevice, hdc, "Direct3D", 0.001f, 0.01f, &m_p3DText, 0, 0);
-		SelectObject(hdc, hFontOld);
-		DeleteObject(hFont);
-		DeleteDC(hdc);
+		//HDC hdc = CreateCompatibleDC(0);
+		//LOGFONT lf;
+		//ZeroMemory(&lf, sizeof(LOGFONT));
+		//lf.lfHeight = 25;
+		//lf.lfWidth = 12;
+		//lf.lfWeight = 500;	//0~1000 
+		//lf.lfItalic = false;
+		//lf.lfUnderline = false;
+		//lf.lfStrikeOut = false;
+		//lf.lfCharSet = DEFAULT_CHARSET;
+		//strcpy_s(lf.lfFaceName, "굴림체");
+		//
+		//HFONT hFont;
+		//HFONT hFontOld;
+		//hFont = CreateFontIndirect(&lf);
+		//hFontOld = (HFONT)SelectObject(hdc, hFont);
+		//D3DXCreateText(g_pD3DDevice, hdc, "Direct3D", 0.001f, 0.01f, &m_p3DText, 0, 0);
+		//SelectObject(hdc, hFontOld);
+		//DeleteObject(hFont);
+		//DeleteDC(hdc);
 	}
 }
 
@@ -296,29 +313,38 @@ void cMainGame::Text_Render()
 {
 	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
 
-	//case 1:
+	//case 1: 2D
 	{
-		std::string sText("ABC 123 !@# 가나다라");
+		std::string sText; // ("ABC 123 !@# 가나다라");
+		std::string sTick1 = to_string(m_nTick2 - m_nTick1);
+		std::string sTick2 = to_string(m_nTick3 - m_nTick2);
+		std::string sTick3 = to_string(m_nTick4 - m_nTick3);
+		sText = sTick1 + " / " + sTick2 + " / " + sTick3;
+
 		RECT rc;
 		SetRect(&rc, 100, 100, 100, 100);
 		m_pFont->DrawTextA(NULL, sText.c_str(), sText.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
+		
+		std::string sText2 = to_string(g_nFps);
+		SetRect(&rc, 0, 0, 0, 0);
+		m_pFont->DrawTextA(NULL, sText2.c_str(), sText2.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
 	}
 	
-	//case 2:
+	//case 2: 3D
 	{
-		D3DXMATRIXA16 matWorld, matS, matR, matT;
-		D3DXMatrixIdentity(&matWorld);
-		D3DXMatrixIdentity(&matS);
-		D3DXMatrixIdentity(&matR);
-		D3DXMatrixIdentity(&matT);
+		//D3DXMATRIXA16 matWorld, matS, matR, matT;
+		//D3DXMatrixIdentity(&matWorld);
+		//D3DXMatrixIdentity(&matS);
+		//D3DXMatrixIdentity(&matR);
+		//D3DXMatrixIdentity(&matT);
 
-		D3DXMatrixScaling(&matS, 1.0f, 1.0f, 100.0f);
-		D3DXMatrixRotationY(&matR, -D3DX_PI / 8.0f);
-		D3DXMatrixTranslation(&matT, -2.0f, 2.0f, 0.0f);
+		//D3DXMatrixScaling(&matS, 1.0f, 1.0f, 100.0f);
+		//D3DXMatrixRotationY(&matR, -D3DX_PI / 8.0f);
+		//D3DXMatrixTranslation(&matT, -2.0f, 2.0f, 0.0f);
 
-		matWorld = matS * matR * matT;
+		//matWorld = matS * matR * matT;
 
-		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
-		m_p3DText->DrawSubset(0);
+		//g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+		//m_p3DText->DrawSubset(0);
 	}
 }

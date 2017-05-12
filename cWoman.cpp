@@ -28,12 +28,24 @@ void cWoman::Update(iMap * pMap)
 {
 	cCharacter::Update(pMap);
 
-	if (m_IsMoving) m_pRootRun->Update(m_pRootRun->GetKeyFrame(), &m_matWorld);
-	else m_pRootStand->Update(m_pRootRun->GetKeyFrame(), &m_matWorld);
+	if (m_IsMoving)
+	{
+		if (m_pRootRun) m_pRootRun->Update(m_pRootRun->GetKeyFrame(), &m_matWorld);
+	}
+	else
+	{
+		if (m_pRootStand) m_pRootStand->Update(m_pRootRun->GetKeyFrame(), &m_matWorld);
+	}
 }
 
-void cWoman::Render()
+void cWoman::Render(bool useVertexBuffer, bool useIndexBuffer)
 {
-	if (m_IsMoving) m_pRootRun->Render();
-	else m_pRootStand->Render();
+	if (m_IsMoving)
+	{
+		if (m_pRootRun)	m_pRootRun->Render(useVertexBuffer, useIndexBuffer);
+	}
+	else
+	{
+		if(m_pRootStand) m_pRootStand->Render(useVertexBuffer, useIndexBuffer);
+	}
 }

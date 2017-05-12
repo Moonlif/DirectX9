@@ -35,6 +35,11 @@ private:
 	//font
 	LPD3DXFONT		m_pFont;
 	ID3DXMesh*		m_p3DText;
+	int				m_nTick1;
+	int				m_nTick2;
+	int				m_nTick3;
+	int				m_nTick4;
+	DWORD			m_dwRenderTime;
 
 	//texture test
 	LPDIRECT3DTEXTURE9			m_pTexture;

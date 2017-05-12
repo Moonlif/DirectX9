@@ -11,6 +11,7 @@ cGrid::cGrid()
 
 cGrid::~cGrid()
 {
+	SAFE_RELEASE(m_pVertexBuffer);
 }
 
 void cGrid::Setup(int xAxisCount, int zAxisCount, float interval)
