@@ -3,6 +3,8 @@
 
 
 cGrid::cGrid()
+	: m_nNumLine(0)
+	, m_pVertexBuffer(NULL)
 {
 }
 
@@ -67,6 +69,30 @@ void cGrid::Setup(int xAxisCount, int zAxisCount, float interval)
 	v.c = D3DCOLOR_XRGB(0, 0, 255);
 	v.p = D3DXVECTOR3(0, 0, -xAxisCount / 2 - 1.0f); m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0, 0, xAxisCount / 2 + 1.0f); m_vecVertex.push_back(v);
+
+
+	//VertexBuffer
+	m_nNumLine = m_vecVertex.size() / 2;
+	g_pD3DDevice->CreateVertexBuffer(
+		m_vecVertex.size() * sizeof(ST_PC_VERTEX),
+		0,
+		ST_PC_VERTEX::FVF,
+		D3DPOOL_MANAGED,
+		&m_pVertexBuffer,
+		NULL
+	);
+
+	ST_PC_VERTEX* pV = NULL;
+	m_pVertexBuffer->Lock(
+		0,
+		0,
+		(LPVOID*)&pV,
+		0
+	);
+
+	memcpy(pV, &m_vecVertex[0], m_vecVertex.size() * sizeof(ST_PC_VERTEX));
+
+	m_pVertexBuffer->Unlock();
 }
 
 void cGrid::Render()
@@ -80,4 +106,12 @@ void cGrid::Render()
 	g_pD3DDevice->SetFVF(ST_PC_VERTEX::FVF);
 
 	g_pD3DDevice->DrawPrimitiveUP(D3DPT_LINELIST, m_vecVertex.size() / 2, &m_vecVertex[0], sizeof(ST_PC_VERTEX));
+
+	//g_pD3DDevice->SetStreamSource(
+	//	0,
+	//	m_pVertexBuffer,
+	//	0,
+	//	sizeof(ST_PC_VERTEX)
+	//);
+	//g_pD3DDevice->DrawPrimitive(D3DPT_LINELIST, 0, m_nNumLine);
 }

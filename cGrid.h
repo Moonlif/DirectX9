@@ -7,6 +7,8 @@ public:
 
 private:
 	std::vector<ST_PC_VERTEX>		m_vecVertex;
+	int						m_nNumLine;
+	LPDIRECT3DVERTEXBUFFER9	m_pVertexBuffer;
 
 public:
 	void Setup(int xAxisCount, int zAxisCount, float interval);

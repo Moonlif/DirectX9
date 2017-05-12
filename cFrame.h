@@ -34,5 +34,13 @@ public:
 	int GetKeyFrame();
 	void CalcLocalT(IN int nKeyFrame, OUT D3DXMATRIXA16& matT);
 	void CalcLocalR(IN int nKeyFrame, OUT D3DXMATRIXA16& matR);
+
+private:
+	int						m_nNumTri;
+	LPDIRECT3DVERTEXBUFFER9	m_pVertexBuffer;
+
+public:
+	void BuildVertexBuffer(std::vector<ST_PNT_VERTEX>& vecVertex);
+
 };
 

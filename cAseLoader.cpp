@@ -413,7 +413,11 @@ void cAseLoader::ProcessMESH(OUT cFrame * pFrame)
 		D3DXVec3TransformCoord(&vecVertex[i].p, &vecVertex[i].p, &matInvWorld);
 		D3DXVec3TransformNormal(&vecVertex[i].n, &vecVertex[i].n, &matInvWorld);
 	}
+
 	pFrame->SetVertex(vecVertex);
+
+	//Using VertexBuffer
+	pFrame->BuildVertexBuffer(vecVertex);
 }
 
 void cAseLoader::ProcessMESH_VERTEX_LIST(OUT std::vector<D3DXVECTOR3>& vecV)

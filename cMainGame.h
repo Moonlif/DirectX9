@@ -32,6 +32,10 @@ private:
 	cFrame*			m_pRootFrame;
 	cWoman*			m_pWoman;
 
+	//font
+	LPD3DXFONT		m_pFont;
+	ID3DXMesh*		m_p3DText;
+
 	//texture test
 	LPDIRECT3DTEXTURE9			m_pTexture;
 	std::vector<ST_PT_VERTEX>	m_vecVertex;
@@ -47,5 +51,8 @@ public:
 	void Obj_Render();
 	void Load_Surface();
 
+	//font
+	void Create_Font();
+	void Text_Render();
 };
 

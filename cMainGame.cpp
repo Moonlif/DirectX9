@@ -26,6 +26,8 @@ cMainGame::cMainGame()
 	, m_pMap(NULL)
 	, m_pRootFrame(NULL)
 	, m_pWoman(NULL)
+	, m_pFont(NULL)
+	, m_p3DText(NULL)
 {	
 }
 
@@ -38,11 +40,17 @@ cMainGame::~cMainGame()
 	SAFE_DELETE(m_pCubeMan);
 	SAFE_DELETE(m_pCubeMan2);
 	SAFE_DELETE(m_pMap);
+	SAFE_DELETE(m_pWoman);
 
+	//font
+	SAFE_RELEASE(m_pFont);
+	SAFE_RELEASE(m_p3DText);
+
+	//texture test
 	SAFE_RELEASE(m_pTexture);
 
 	if (m_pRootFrame) m_pRootFrame->Destroy();
-	SAFE_DELETE(m_pWoman);
+
 
 	g_pDeviceManager->Destroy();
 	g_pTextureManager->Destroy();
@@ -77,6 +85,8 @@ void cMainGame::Setup()
 	m_pPyramid->Setup();
 
 	Set_Light();
+
+	Create_Font();
 }
 
 void cMainGame::Update()
@@ -97,14 +107,18 @@ void cMainGame::Render()
 
 	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
 
-	if (m_pGrid) m_pGrid->Render();
+	//for (int i = 0; i < 100; ++i)
+	{
+		if (m_pGrid) m_pGrid->Render();
+		if (m_pWoman) m_pWoman->Render();
+	}
+	
 	//if (m_pPyramid) m_pPyramid->Render();
-
 	//Obj_Render();
 	//if (m_pCubeMan) m_pCubeMan->Render();
-
 	//if (m_pRootFrame) m_pRootFrame->Render();
-	m_pWoman->Render();
+
+	Text_Render();
 
 	//texture test render
 	{
@@ -229,4 +243,82 @@ void cMainGame::Load_Surface()
 	matWorld = matS * matR;
 
 	m_pMap = new cObjMap("objects", "map_surface.obj", &matWorld);
+}
+
+
+//font
+void cMainGame::Create_Font()
+{
+	//case 1:
+	{
+		D3DXFONT_DESC fontDiscription;
+		ZeroMemory(&fontDiscription, sizeof(D3DXFONT_DESC));
+
+		fontDiscription.Height = 50;
+		fontDiscription.Width = 25;
+		fontDiscription.Weight = FW_MEDIUM;
+		fontDiscription.Italic = false;
+		fontDiscription.CharSet = DEFAULT_CHARSET;
+		fontDiscription.OutputPrecision = OUT_DEFAULT_PRECIS;
+		fontDiscription.PitchAndFamily = FF_DONTCARE;
+		AddFontResource("font/umberto.ttf");
+		strcpy_s(fontDiscription.FaceName, "umberto");
+
+		D3DXCreateFontIndirect(g_pD3DDevice, &fontDiscription, &m_pFont);
+	}
+
+	//case 2:
+	{
+		HDC hdc = CreateCompatibleDC(0);
+		LOGFONT lf;
+		ZeroMemory(&lf, sizeof(LOGFONT));
+		lf.lfHeight = 25;
+		lf.lfWidth = 12;
+		lf.lfWeight = 500;	//0~1000 
+		lf.lfItalic = false;
+		lf.lfUnderline = false;
+		lf.lfStrikeOut = false;
+		lf.lfCharSet = DEFAULT_CHARSET;
+		strcpy_s(lf.lfFaceName, "굴림체");
+		
+		HFONT hFont;
+		HFONT hFontOld;
+		hFont = CreateFontIndirect(&lf);
+		hFontOld = (HFONT)SelectObject(hdc, hFont);
+		D3DXCreateText(g_pD3DDevice, hdc, "Direct3D", 0.001f, 0.01f, &m_p3DText, 0, 0);
+		SelectObject(hdc, hFontOld);
+		DeleteObject(hFont);
+		DeleteDC(hdc);
+	}
+}
+
+void cMainGame::Text_Render()
+{
+	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
+
+	//case 1:
+	{
+		std::string sText("ABC 123 !@# 가나다라");
+		RECT rc;
+		SetRect(&rc, 100, 100, 100, 100);
+		m_pFont->DrawTextA(NULL, sText.c_str(), sText.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
+	}
+	
+	//case 2:
+	{
+		D3DXMATRIXA16 matWorld, matS, matR, matT;
+		D3DXMatrixIdentity(&matWorld);
+		D3DXMatrixIdentity(&matS);
+		D3DXMatrixIdentity(&matR);
+		D3DXMatrixIdentity(&matT);
+
+		D3DXMatrixScaling(&matS, 1.0f, 1.0f, 100.0f);
+		D3DXMatrixRotationY(&matR, -D3DX_PI / 8.0f);
+		D3DXMatrixTranslation(&matT, -2.0f, 2.0f, 0.0f);
+
+		matWorld = matS * matR * matT;
+
+		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+		m_p3DText->DrawSubset(0);
+	}
 }
