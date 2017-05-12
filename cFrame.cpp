@@ -54,7 +54,7 @@ void cFrame::Render(bool useVertexBuffer, bool useIndexBuffer)
 
 		if (useVertexBuffer == false && useIndexBuffer == false)
 		{
-			for (int i = 0; i < 500; ++i)
+			for (int i = 0; i < 200; ++i)
 			{
 				g_pD3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, m_vecVertex.size() / 3, &m_vecVertex[0], sizeof(ST_PNT_VERTEX));
 			}
@@ -63,7 +63,7 @@ void cFrame::Render(bool useVertexBuffer, bool useIndexBuffer)
 		//Using VertexBuffer
 		else if (useVertexBuffer == true && useIndexBuffer == false)
 		{
-			for (int i = 0; i < 500; ++i)
+			for (int i = 0; i < 200; ++i)
 			{
 				g_pD3DDevice->SetStreamSource(0, m_pVertexBuffer, 0, sizeof(ST_PNT_VERTEX));
 				g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLELIST, 0, m_nNumTri);

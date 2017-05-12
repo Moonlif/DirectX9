@@ -28,10 +28,10 @@ cMainGame::cMainGame()
 	, m_pWoman(NULL)
 	, m_pFont(NULL)
 	, m_p3DText(NULL)
-	, m_nTick1(0)
-	, m_nTick2(0)
-	, m_nTick3(0)
-	, m_nTick4(0)
+	, m_dwTick1(0)
+	, m_dwTick2(0)
+	, m_dwTick3(0)
+	, m_dwTick4(0)
 	, m_dwRenderTime(0)
 {	
 }
@@ -114,21 +114,21 @@ void cMainGame::Render()
 	if (m_pGrid) m_pGrid->Render();
 
 	//if (m_nTick1 == 0) 
-		m_nTick1 = GetTickCount();
+		m_dwTick1 = GetTickCount();
 	//default render
 	if (m_pWoman) m_pWoman->Render(false, false);
 	//if (m_nTick2 == 0) 
-		m_nTick2 = GetTickCount();
+		m_dwTick2 = GetTickCount();
 
 	//using vertexBuffer
 	if (m_pWoman) m_pWoman->Render(true, false);
 	//if (m_nTick3 == 0) 
-		m_nTick3 = GetTickCount();
-
+		m_dwTick3 = GetTickCount();
+		
 	//using indexBuffer
 	//if (m_pWoman) m_pWoman->Render(false, true);
 	//if (m_nTick4 == 0) 
-		m_nTick4 = GetTickCount();
+		m_dwTick4 = GetTickCount();
 
 	//if (m_pPyramid) m_pPyramid->Render();
 	//Obj_Render();
@@ -316,9 +316,9 @@ void cMainGame::Text_Render()
 	//case 1: 2D
 	{
 		std::string sText; // ("ABC 123 !@# 가나다라");
-		std::string sTick1 = to_string(m_nTick2 - m_nTick1);
-		std::string sTick2 = to_string(m_nTick3 - m_nTick2);
-		std::string sTick3 = to_string(m_nTick4 - m_nTick3);
+		std::string sTick1 = to_string(m_dwTick2 - m_dwTick1);
+		std::string sTick2 = to_string(m_dwTick3 - m_dwTick2);
+		std::string sTick3 = to_string(m_dwTick4 - m_dwTick3);
 		sText = sTick1 + " / " + sTick2 + " / " + sTick3;
 
 		RECT rc;
