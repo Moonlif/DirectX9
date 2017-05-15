@@ -136,8 +136,15 @@ void cMainGame::Render()
 
 	Text_Render();
 
+	m_dwTime1 = GetTickCount();
+	for (int i = 0; i < 500; ++i)
 	Obj_Render();
+	
+	m_dwTime2 = GetTickCount();
+	for (int i = 0; i < 500; ++i)
 	Mesh_Render();
+
+	m_dwTime3 = GetTickCount();
 
 	//texture test render
 	{
@@ -320,9 +327,20 @@ void cMainGame::Text_Render()
 	//case 1: 2D
 	{
 		std::string sText; // ("ABC 123 !@# 가나다라");
+		std::string sTick1 = to_string(m_dwTime2 - m_dwTime1);
+		std::string sTick2 = to_string(m_dwTime3 - m_dwTime2);
+
+		sText = sTick1 + " / " + sTick2;
+
 		RECT rc;
 		SetRect(&rc, 100, 100, 100, 100);
 		m_pFont->DrawTextA(NULL, sText.c_str(), sText.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
+
+		//fps render
+		std::string sText2 = to_string(g_nFps);
+		SetRect(&rc, 0, 0, 0, 0);
+		m_pFont->DrawTextA(NULL, sText2.c_str(), sText2.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
+
 	}
 	
 	//case 2: 3D

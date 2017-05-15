@@ -50,6 +50,11 @@ private:
 	LPDIRECT3DTEXTURE9			m_pTexture;
 	std::vector<ST_PT_VERTEX>	m_vecVertex;
 
+	//timecheck
+	DWORD m_dwTime1;
+	DWORD m_dwTime2;
+	DWORD m_dwTime3;
+
 public:
 	void Setup();
 	void Update();
