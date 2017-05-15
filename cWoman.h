@@ -10,7 +10,7 @@ public:
 
 	virtual void Setup();
 	virtual void Update(iMap* pMap);
-	virtual void Render(bool useVertexBuffer, bool useIndexBuffer);
+	virtual void Render();
 
 private:
 	cFrame* m_pRootStand;

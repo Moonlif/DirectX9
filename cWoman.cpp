@@ -38,14 +38,14 @@ void cWoman::Update(iMap * pMap)
 	}
 }
 
-void cWoman::Render(bool useVertexBuffer, bool useIndexBuffer)
+void cWoman::Render()
 {
 	if (m_IsMoving)
 	{
-		if (m_pRootRun)	m_pRootRun->Render(useVertexBuffer, useIndexBuffer);
+		if (m_pRootRun)	m_pRootRun->Render();
 	}
 	else
 	{
-		if(m_pRootStand) m_pRootStand->Render(useVertexBuffer, useIndexBuffer);
+		if(m_pRootStand) m_pRootStand->Render();
 	}
 }

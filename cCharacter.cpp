@@ -71,7 +71,7 @@ void cCharacter::Update(iMap* pMap)
 	D3DXVECTOR3 vPosition = m_vPosition;
 	if (GetKeyState('W') & 0x8000)
 	{
-		vPosition = m_vPosition + m_vDirection * 0.05f;
+		vPosition = m_vPosition + m_vDirection * 0.5f;
 
 		//if (FloorIntersect() - m_vPosition.y > 0.1f) m_vPosition = m_vPosition - m_vDirection * 0.1f;
 		//if (WallIntersect(true) < 0.2f) m_vPosition = m_vPosition - m_vDirection * 0.1f;

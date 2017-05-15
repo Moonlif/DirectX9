@@ -12,6 +12,7 @@ class iMap;
 class cFrame;
 
 class cWoman;
+class cMtlTex;
 
 class cMainGame
 {
@@ -35,11 +36,15 @@ private:
 	//font
 	LPD3DXFONT		m_pFont;
 	ID3DXMesh*		m_p3DText;
-	DWORD			m_dwTick1;
-	DWORD			m_dwTick2;
-	DWORD			m_dwTick3;
-	DWORD			m_dwTick4;
-	DWORD			m_dwRenderTime;
+
+	//mesh
+	LPD3DXMESH		m_pMeshTeapot;
+	LPD3DXMESH		m_pMeshSphere;
+	D3DMATERIAL9	m_stMtlTeapot;
+	D3DMATERIAL9	m_stMtlSphere;
+
+	LPD3DXMESH				m_pMeshObjectMap;
+	std::vector<cMtlTex*>	m_vecMtlTexObjectMap;
 
 	//texture test
 	LPDIRECT3DTEXTURE9			m_pTexture;
@@ -59,5 +64,9 @@ public:
 	//font
 	void Create_Font();
 	void Text_Render();
+
+	//mesh
+	void Setup_MeshObject();
+	void Mesh_Render();
 };
 

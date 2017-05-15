@@ -28,11 +28,9 @@ cMainGame::cMainGame()
 	, m_pWoman(NULL)
 	, m_pFont(NULL)
 	, m_p3DText(NULL)
-	, m_dwTick1(0)
-	, m_dwTick2(0)
-	, m_dwTick3(0)
-	, m_dwTick4(0)
-	, m_dwRenderTime(0)
+	, m_pMeshTeapot(NULL)
+	, m_pMeshSphere(NULL)
+	, m_pMeshObjectMap(NULL)
 {	
 }
 
@@ -56,6 +54,15 @@ cMainGame::~cMainGame()
 	//texture test
 	SAFE_RELEASE(m_pTexture);
 
+	//mesh
+	SAFE_RELEASE(m_pMeshTeapot);
+	SAFE_RELEASE(m_pMeshSphere);
+	SAFE_RELEASE(m_pMeshObjectMap);
+	//for(int i=0; i<m_vecMtlTexObjectMap.size(); ++i)
+	//{
+	//	SAFE_DELETE(m_vecMtlTexObjectMap[i]);
+	//}
+
 	g_pTextureManager->Destroy();
 	g_pDeviceManager->Destroy();
 }
@@ -68,8 +75,8 @@ void cMainGame::Setup()
 	//m_pCubeMan = new cCubeMan;
 	//m_pCubeMan->Setup(false);
 
-	//cObjLoader loadObj;
-	//loadObj.Load(m_vecGroup, "objects", "Map.obj");
+	cObjLoader loadObj;
+	loadObj.Load(m_vecGroup, "objects", "Map.obj");
 	//Load_Surface();
 
 	//cAseLoader loadAse;
@@ -88,9 +95,17 @@ void cMainGame::Setup()
 	m_pPyramid = new cPyramid;
 	m_pPyramid->Setup();
 
+	//light
 	Set_Light();
 
+	//font
 	Create_Font();
+
+	//mesh test
+	Setup_MeshObject();
+
+	cObjLoader objLoader;
+	m_pMeshObjectMap = objLoader.LoadMesh(m_vecMtlTexObjectMap, "objects", "Map.obj");
 }
 
 void cMainGame::Update()
@@ -112,30 +127,17 @@ void cMainGame::Render()
 	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
 
 	if (m_pGrid) m_pGrid->Render();
-
-	//if (m_nTick1 == 0) 
-		m_dwTick1 = GetTickCount();
-	//default render
-	if (m_pWoman) m_pWoman->Render(false, false);
-	//if (m_nTick2 == 0) 
-		m_dwTick2 = GetTickCount();
-
-	//using vertexBuffer
-	if (m_pWoman) m_pWoman->Render(true, false);
-	//if (m_nTick3 == 0) 
-		m_dwTick3 = GetTickCount();
-		
-	//using indexBuffer
-	//if (m_pWoman) m_pWoman->Render(false, true);
-	//if (m_nTick4 == 0) 
-		m_dwTick4 = GetTickCount();
-
 	//if (m_pPyramid) m_pPyramid->Render();
-	//Obj_Render();
+
+	if (m_pWoman) m_pWoman->Render();
+
 	//if (m_pCubeMan) m_pCubeMan->Render();
 	//if (m_pRootFrame) m_pRootFrame->Render();
 
 	Text_Render();
+
+	Obj_Render();
+	Mesh_Render();
 
 	//texture test render
 	{
@@ -157,6 +159,7 @@ void cMainGame::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	if (m_pCamera) m_pCamera->WndProc(hWnd, message, wParam, lParam);
 }
 
+//light
 void cMainGame::Set_Light()
 {
 	//g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, false);
@@ -237,6 +240,7 @@ void cMainGame::Set_Light()
 	*/
 }
 
+//object
 void cMainGame::Obj_Render()
 {
 	D3DXMATRIXA16 matWorld, matS, matR;
@@ -286,26 +290,26 @@ void cMainGame::Create_Font()
 
 	//case 2: 3D
 	{
-		//HDC hdc = CreateCompatibleDC(0);
-		//LOGFONT lf;
-		//ZeroMemory(&lf, sizeof(LOGFONT));
-		//lf.lfHeight = 25;
-		//lf.lfWidth = 12;
-		//lf.lfWeight = 500;	//0~1000 
-		//lf.lfItalic = false;
-		//lf.lfUnderline = false;
-		//lf.lfStrikeOut = false;
-		//lf.lfCharSet = DEFAULT_CHARSET;
-		//strcpy_s(lf.lfFaceName, "±¼¸²Ã¼");
-		//
-		//HFONT hFont;
-		//HFONT hFontOld;
-		//hFont = CreateFontIndirect(&lf);
-		//hFontOld = (HFONT)SelectObject(hdc, hFont);
-		//D3DXCreateText(g_pD3DDevice, hdc, "Direct3D", 0.001f, 0.01f, &m_p3DText, 0, 0);
-		//SelectObject(hdc, hFontOld);
-		//DeleteObject(hFont);
-		//DeleteDC(hdc);
+		HDC hdc = CreateCompatibleDC(0);
+		LOGFONT lf;
+		ZeroMemory(&lf, sizeof(LOGFONT));
+		lf.lfHeight = 25;
+		lf.lfWidth = 12;
+		lf.lfWeight = 500;	//0~1000 
+		lf.lfItalic = false;
+		lf.lfUnderline = false;
+		lf.lfStrikeOut = false;
+		lf.lfCharSet = DEFAULT_CHARSET;
+		strcpy_s(lf.lfFaceName, "±¼¸²Ã¼");
+		
+		HFONT hFont;
+		HFONT hFontOld;
+		hFont = CreateFontIndirect(&lf);
+		hFontOld = (HFONT)SelectObject(hdc, hFont);
+		D3DXCreateText(g_pD3DDevice, hdc, "Direct3D", 0.001f, 0.01f, &m_p3DText, 0, 0);
+		SelectObject(hdc, hFontOld);
+		DeleteObject(hFont);
+		DeleteDC(hdc);
 	}
 }
 
@@ -316,35 +320,99 @@ void cMainGame::Text_Render()
 	//case 1: 2D
 	{
 		std::string sText; // ("ABC 123 !@# °¡³ª´Ù¶ó");
-		std::string sTick1 = to_string(m_dwTick2 - m_dwTick1);
-		std::string sTick2 = to_string(m_dwTick3 - m_dwTick2);
-		std::string sTick3 = to_string(m_dwTick4 - m_dwTick3);
-		sText = sTick1 + " / " + sTick2 + " / " + sTick3;
-
 		RECT rc;
 		SetRect(&rc, 100, 100, 100, 100);
 		m_pFont->DrawTextA(NULL, sText.c_str(), sText.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
-		
-		std::string sText2 = to_string(g_nFps);
-		SetRect(&rc, 0, 0, 0, 0);
-		m_pFont->DrawTextA(NULL, sText2.c_str(), sText2.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
 	}
 	
 	//case 2: 3D
 	{
-		//D3DXMATRIXA16 matWorld, matS, matR, matT;
+		D3DXMATRIXA16 matWorld, matS, matR, matT;
+		D3DXMatrixIdentity(&matWorld);
+		D3DXMatrixIdentity(&matS);
+		D3DXMatrixIdentity(&matR);
+		D3DXMatrixIdentity(&matT);
+
+		D3DXMatrixScaling(&matS, 1.0f, 1.0f, 100.0f);
+		D3DXMatrixRotationY(&matR, -D3DX_PI / 8.0f);
+		D3DXMatrixTranslation(&matT, -2.0f, 2.0f, 0.0f);
+
+		matWorld = matS * matR * matT;
+
+		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+		//m_p3DText->DrawSubset(0);
+	}
+}
+
+//mesh
+void cMainGame::Setup_MeshObject()
+{
+	D3DXCreateTeapot(g_pD3DDevice, &m_pMeshTeapot, NULL);
+	D3DXCreateSphere(g_pD3DDevice, 0.5f, 10, 10, &m_pMeshSphere, NULL);
+
+	ZeroMemory(&m_stMtlTeapot, sizeof(D3DMATERIAL9));
+	m_stMtlTeapot.Ambient = D3DXCOLOR(0.0f, 0.7f, 0.7f, 1.0f);
+	m_stMtlTeapot.Diffuse = D3DXCOLOR(0.0f, 0.7f, 0.7f, 1.0f);
+	m_stMtlTeapot.Specular = D3DXCOLOR(0.0f, 0.7f, 0.7f, 1.0f);
+
+	ZeroMemory(&m_stMtlSphere, sizeof(D3DMATERIAL9));
+	m_stMtlSphere.Ambient = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
+	m_stMtlSphere.Diffuse = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
+	m_stMtlSphere.Specular = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
+}
+
+void cMainGame::Mesh_Render()
+{
+	D3DXMATRIXA16 matWorld, matS, matR, matT;
+
+	//teapot render
+	{
 		//D3DXMatrixIdentity(&matWorld);
 		//D3DXMatrixIdentity(&matS);
 		//D3DXMatrixIdentity(&matR);
-		//D3DXMatrixIdentity(&matT);
 
-		//D3DXMatrixScaling(&matS, 1.0f, 1.0f, 100.0f);
-		//D3DXMatrixRotationY(&matR, -D3DX_PI / 8.0f);
-		//D3DXMatrixTranslation(&matT, -2.0f, 2.0f, 0.0f);
-
-		//matWorld = matS * matR * matT;
+		//D3DXMatrixScaling(&matS, 1.0f, 1.0f, 1.0f);
+		//matWorld = matS * matR;
+		//D3DXMatrixTranslation(&matWorld, 0, 0, 4);
 
 		//g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
-		//m_p3DText->DrawSubset(0);
+		//g_pD3DDevice->SetMaterial(&m_stMtlTeapot);
+		//m_pMeshTeapot->DrawSubset(0);
+	}
+
+	//sphere render
+	{
+		//D3DXMatrixIdentity(&matWorld);
+		//D3DXMatrixIdentity(&matS);
+		//D3DXMatrixIdentity(&matR);
+
+		//D3DXMatrixScaling(&matS, 1.0f, 1.0f, 1.0f);
+		//matWorld = matS * matR;
+
+		//g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+		//g_pD3DDevice->SetMaterial(&m_stMtlSphere);
+		//m_pMeshSphere->DrawSubset(0);
+	}
+
+	//map render
+	{
+		D3DXMatrixIdentity(&matWorld);
+		D3DXMatrixIdentity(&matS);
+		D3DXMatrixIdentity(&matR);
+		D3DXMatrixIdentity(&matT);
+
+		D3DXMatrixScaling(&matS, 0.01f, 0.01f, 0.01f);
+		D3DXMatrixRotationX(&matR, -D3DX_PI * 0.5f);
+		D3DXMatrixTranslation(&matT, 20, 0, 0);
+		matWorld = matS * matR * matT;
+		
+		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+
+		for (int i = 0; i < m_vecMtlTexObjectMap.size(); ++i)
+		{
+			g_pD3DDevice->SetTexture(0, m_vecMtlTexObjectMap[i]->GetTexture());
+			g_pD3DDevice->SetMaterial(&m_vecMtlTexObjectMap[i]->GetMaterial());
+			if(m_pMeshObjectMap) m_pMeshObjectMap->DrawSubset(i);
+		}
 	}
 }

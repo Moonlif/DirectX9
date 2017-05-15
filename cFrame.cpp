@@ -43,7 +43,7 @@ void cFrame::Update(int nKeyFrame, D3DXMATRIXA16 * pmatParent)
 	}
 }
 
-void cFrame::Render(bool useVertexBuffer, bool useIndexBuffer)
+void cFrame::Render()
 {
 	if (m_pMtlTex)
 	{
@@ -52,33 +52,15 @@ void cFrame::Render(bool useVertexBuffer, bool useIndexBuffer)
 		g_pD3DDevice->SetMaterial(&m_pMtlTex->GetMaterial());
 		g_pD3DDevice->SetFVF(ST_PNT_VERTEX::FVF);
 
-		if (useVertexBuffer == false && useIndexBuffer == false)
-		{
-			for (int i = 0; i < 200; ++i)
-			{
-				g_pD3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, m_vecVertex.size() / 3, &m_vecVertex[0], sizeof(ST_PNT_VERTEX));
-			}
-		}
+		//g_pD3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, m_vecVertex.size() / 3, &m_vecVertex[0], sizeof(ST_PNT_VERTEX));
 
-		//Using VertexBuffer
-		else if (useVertexBuffer == true && useIndexBuffer == false)
-		{
-			for (int i = 0; i < 200; ++i)
-			{
-				g_pD3DDevice->SetStreamSource(0, m_pVertexBuffer, 0, sizeof(ST_PNT_VERTEX));
-				g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLELIST, 0, m_nNumTri);
-			}
-		}
-
-		//Using IndexBuffer
-		else if (useVertexBuffer == false && useIndexBuffer == true)
-		{
-
-		}
+		g_pD3DDevice->SetStreamSource(0, m_pVertexBuffer, 0, sizeof(ST_PNT_VERTEX));
+		g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLELIST, 0, m_nNumTri);
 	}
+	g_pD3DDevice->SetTexture(0, NULL);
 
 	for each (auto c in m_vecChild)
-		c->Render(useVertexBuffer, useIndexBuffer);
+		c->Render();
 }
 
 void cFrame::AddChild(cFrame * pChild)
