@@ -40,12 +40,17 @@ cMainGame::~cMainGame()
 	SAFE_DELETE(m_pCubePC);
 	SAFE_DELETE(m_pCamera);
 	SAFE_DELETE(m_pGrid);
+	SAFE_DELETE(m_pPyramid);
 	SAFE_DELETE(m_pCubeMan);
 	SAFE_DELETE(m_pCubeMan2);
 	SAFE_DELETE(m_pMap);
 	SAFE_DELETE(m_pWoman);
 
 	if (m_pRootFrame) m_pRootFrame->Destroy();
+	for (int i = 0; i < m_vecGroup.size(); ++i)
+	{
+		SAFE_DELETE(m_vecGroup[i]);
+	}
 
 	//font
 	SAFE_RELEASE(m_pFont);
@@ -58,10 +63,10 @@ cMainGame::~cMainGame()
 	SAFE_RELEASE(m_pMeshTeapot);
 	SAFE_RELEASE(m_pMeshSphere);
 	SAFE_RELEASE(m_pMeshObjectMap);
-	//for(int i=0; i<m_vecMtlTexObjectMap.size(); ++i)
-	//{
-	//	SAFE_DELETE(m_vecMtlTexObjectMap[i]);
-	//}
+	for(int i=0; i<m_vecMtlTexObjectMap.size(); ++i)
+	{
+		SAFE_DELETE(m_vecMtlTexObjectMap[i]);
+	}
 
 	g_pTextureManager->Destroy();
 	g_pDeviceManager->Destroy();
@@ -86,8 +91,6 @@ void cMainGame::Setup()
 	m_pWoman->Setup();
 
 	m_pCamera = new cCamera;
-	//m_pCamera->Setup(&m_pCubeMan->GetPosition());
-	//m_pCamera->Setup(NULL);
 	m_pCamera->Setup(&m_pWoman->GetPosition());
 
 	m_pGrid = new cGrid;
@@ -334,12 +337,12 @@ void cMainGame::Text_Render()
 
 		RECT rc;
 		SetRect(&rc, 100, 100, 100, 100);
-		m_pFont->DrawTextA(NULL, sText.c_str(), sText.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
+		if (m_pFont) m_pFont->DrawTextA(NULL, sText.c_str(), sText.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
 
 		//fps render
 		std::string sText2 = to_string(g_nFps);
 		SetRect(&rc, 0, 0, 0, 0);
-		m_pFont->DrawTextA(NULL, sText2.c_str(), sText2.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
+		if (m_pFont) m_pFont->DrawTextA(NULL, sText2.c_str(), sText2.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
 
 	}
 	

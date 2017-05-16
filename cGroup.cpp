@@ -13,6 +13,7 @@ cGroup::cGroup()
 cGroup::~cGroup()
 {
 	SAFE_RELEASE(m_pMtlTex);
+	SAFE_RELEASE(m_pVertexBuffer);
 }
 
 void cGroup::Render()
