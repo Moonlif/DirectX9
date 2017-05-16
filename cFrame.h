@@ -22,6 +22,7 @@ private:
 	LPDIRECT3DVERTEXBUFFER9	m_pVertexBuffer;
 
 	SYNTHESIZE_ADD_REF(LPD3DXMESH, m_pMesh, Mesh);
+	SYNTHESIZE(int, m_nAttrID, AttrID);
 
 public:
 	void Update(int nKeyFrame, D3DXMATRIXA16* pmatParent);
@@ -42,5 +43,7 @@ public:
 
 	void BuildVertexBuffer(std::vector<ST_PNT_VERTEX>& vecVertex);
 	void BuildMesh(std::vector<ST_PNT_VERTEX>& vecVertex);
+	void SumMeshInfo(std::vector<ST_PNT_VERTEX>& vecVertex, std::vector<cMtlTex*>& vecMtlTex, std::vector<DWORD>& vecAttribute);
+	void GetWorldTMforAnimation(OUT D3DXMATRIXA16* matWorld, DWORD attributeNum);
 };
 

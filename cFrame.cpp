@@ -12,6 +12,7 @@ cFrame::cFrame()
 	, m_nNumTri(0)
 	, m_pVertexBuffer(NULL)
 	, m_pMesh(NULL)
+	, m_nAttrID(-1)
 {
 	D3DXMatrixIdentity(&m_matLocalTM);
 	D3DXMatrixIdentity(&m_matWorldTM);
@@ -280,4 +281,49 @@ void cFrame::BuildMesh(std::vector<ST_PNT_VERTEX>& vecVertex)
 	m_pMesh->OptimizeInplace(
 		D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_COMPACT | D3DXMESHOPT_VERTEXCACHE,
 		&vecAdjacencyBuffer[0], 0, 0, 0);
+}
+
+void cFrame::SumMeshInfo(std::vector<ST_PNT_VERTEX>& vecVertex, std::vector<cMtlTex*>& vecMtlTex, std::vector<DWORD>& vecAttribute)
+{
+	if (m_pMtlTex != NULL)
+	{
+		for (int i = 0; i < m_vecVertex.size(); ++i)
+		{
+			vecVertex.push_back(m_vecVertex[i]);
+		}
+
+		m_nAttrID = vecMtlTex.size();
+		for (int i = 0; i < m_vecVertex.size() / 3; ++i)
+		{
+			vecAttribute.push_back(m_nAttrID);
+		}
+
+		cMtlTex* mtlTex = new cMtlTex;
+		mtlTex->SetAttrID(m_nAttrID);
+		mtlTex->SetMaterial(m_pMtlTex->GetMaterial());
+		mtlTex->SetTexture(m_pMtlTex->GetTexture());
+		vecMtlTex.push_back(mtlTex);
+	}
+
+	for each (auto c in m_vecChild)
+		c->SumMeshInfo(vecVertex, vecMtlTex, vecAttribute);
+}
+
+void cFrame::GetWorldTMforAnimation(OUT D3DXMATRIXA16* matWorld, DWORD attributeNum)
+{
+	int a = m_nAttrID;
+	int b = attributeNum;
+
+	if (m_pMtlTex != NULL && attributeNum == m_nAttrID)
+	{
+		*matWorld = m_matWorldTM;
+		return;
+	}
+	else
+	{
+		for each (auto c in m_vecChild)
+		{
+			c->GetWorldTMforAnimation(matWorld, attributeNum);
+		}
+	}
 }
