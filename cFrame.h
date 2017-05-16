@@ -18,6 +18,11 @@ private:
 
 	std::vector<cFrame*> m_vecChild;
 
+	int						m_nNumTri;
+	LPDIRECT3DVERTEXBUFFER9	m_pVertexBuffer;
+
+	SYNTHESIZE_ADD_REF(LPD3DXMESH, m_pMesh, Mesh);
+
 public:
 	void Update(int nKeyFrame, D3DXMATRIXA16* pmatParent);
 	void Render();
@@ -35,12 +40,7 @@ public:
 	void CalcLocalT(IN int nKeyFrame, OUT D3DXMATRIXA16& matT);
 	void CalcLocalR(IN int nKeyFrame, OUT D3DXMATRIXA16& matR);
 
-private:
-	int						m_nNumTri;
-	LPDIRECT3DVERTEXBUFFER9	m_pVertexBuffer;
-
-public:
 	void BuildVertexBuffer(std::vector<ST_PNT_VERTEX>& vecVertex);
-
+	void BuildMesh(std::vector<ST_PNT_VERTEX>& vecVertex);
 };
 

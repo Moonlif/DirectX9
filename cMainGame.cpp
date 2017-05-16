@@ -80,8 +80,8 @@ void cMainGame::Setup()
 	//m_pCubeMan = new cCubeMan;
 	//m_pCubeMan->Setup(false);
 
-	cObjLoader loadObj;
-	loadObj.Load(m_vecGroup, "objects", "Map.obj");
+	//cObjLoader loadObj;
+	//loadObj.Load(m_vecGroup, "objects", "Map.obj");
 	//Load_Surface();
 
 	//cAseLoader loadAse;
@@ -127,27 +127,22 @@ void cMainGame::Render()
 	g_pD3DDevice->Clear(NULL, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(100, 100, 100), 1.0f, 0);
 	g_pD3DDevice->BeginScene();
 
-	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
-
 	if (m_pGrid) m_pGrid->Render();
-	//if (m_pPyramid) m_pPyramid->Render();
-
-	if (m_pWoman) m_pWoman->Render();
+	if (m_pPyramid) m_pPyramid->Render();
 
 	//if (m_pCubeMan) m_pCubeMan->Render();
 	//if (m_pRootFrame) m_pRootFrame->Render();
 
+	m_dwTime1 = GetTickCount();
+	if (m_pWoman) m_pWoman->Render();
+	m_dwTime2 = GetTickCount();
+	m_dwTime3 = GetTickCount();
+
 	Text_Render();
 
-	m_dwTime1 = GetTickCount();
-	//for (int i = 0; i < 500; ++i)
-	Obj_Render();
-	
-	m_dwTime2 = GetTickCount();
-	//for (int i = 0; i < 500; ++i)
+	//Obj_Render();
 	Mesh_Render();
 
-	m_dwTime3 = GetTickCount();
 
 	//texture test render
 	{
@@ -384,6 +379,8 @@ void cMainGame::Setup_MeshObject()
 
 void cMainGame::Mesh_Render()
 {
+	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
+
 	D3DXMATRIXA16 matWorld, matS, matR, matT;
 
 	//teapot render
@@ -424,7 +421,7 @@ void cMainGame::Mesh_Render()
 
 		D3DXMatrixScaling(&matS, 0.01f, 0.01f, 0.01f);
 		D3DXMatrixRotationX(&matR, -D3DX_PI * 0.5f);
-		D3DXMatrixTranslation(&matT, 20, 0, 0);
+		//D3DXMatrixTranslation(&matT, 20, 0, 0);
 		matWorld = matS * matR * matT;
 		
 		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);

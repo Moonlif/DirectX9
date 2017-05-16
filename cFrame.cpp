@@ -11,6 +11,7 @@ cFrame::cFrame()
 	, m_dwPreTime(0)
 	, m_nNumTri(0)
 	, m_pVertexBuffer(NULL)
+	, m_pMesh(NULL)
 {
 	D3DXMatrixIdentity(&m_matLocalTM);
 	D3DXMatrixIdentity(&m_matWorldTM);
@@ -21,6 +22,7 @@ cFrame::~cFrame()
 {
 	SAFE_RELEASE(m_pMtlTex);
 	SAFE_RELEASE(m_pVertexBuffer);
+	SAFE_RELEASE(m_pMesh);
 }
 
 void cFrame::Update(int nKeyFrame, D3DXMATRIXA16 * pmatParent)
@@ -54,8 +56,15 @@ void cFrame::Render()
 
 		//g_pD3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, m_vecVertex.size() / 3, &m_vecVertex[0], sizeof(ST_PNT_VERTEX));
 
-		g_pD3DDevice->SetStreamSource(0, m_pVertexBuffer, 0, sizeof(ST_PNT_VERTEX));
-		g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLELIST, 0, m_nNumTri);
+		//using vertexBuffer
+		//g_pD3DDevice->SetStreamSource(0, m_pVertexBuffer, 0, sizeof(ST_PNT_VERTEX));
+		//for (int i = 0; i<4000; ++i)
+		//g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLELIST, 0, m_nNumTri);
+
+		//using mesh
+		//for(int i =0; i<4000; ++i)
+		m_pMesh->DrawSubset(0);
+		
 	}
 	g_pD3DDevice->SetTexture(0, NULL);
 
@@ -227,23 +236,48 @@ void cFrame::BuildVertexBuffer(std::vector<ST_PNT_VERTEX>& vecVertex)
 {
 	m_nNumTri = vecVertex.size() / 3;
 	g_pD3DDevice->CreateVertexBuffer(
-		vecVertex.size() * sizeof(ST_PNT_VERTEX),
-		0,
-		ST_PNT_VERTEX::FVF,
-		D3DPOOL_MANAGED,
-		&m_pVertexBuffer,
-		NULL
-	);
+		vecVertex.size() * sizeof(ST_PNT_VERTEX), 0, ST_PNT_VERTEX::FVF, D3DPOOL_MANAGED, &m_pVertexBuffer, NULL);
 
 	ST_PNT_VERTEX* pV = NULL;
-	m_pVertexBuffer->Lock(
-		0,
-		0,
-		(LPVOID*)&pV,
-		0
-	);
+	m_pVertexBuffer->Lock(0, 0, (LPVOID*)&pV, 0);
 
 	memcpy(pV, &vecVertex[0], vecVertex.size() * sizeof(ST_PNT_VERTEX));
 
 	m_pVertexBuffer->Unlock();
+}
+
+void cFrame::BuildMesh(std::vector<ST_PNT_VERTEX>& vecVertex)
+{
+	m_nNumTri = vecVertex.size() / 3;
+
+	D3DXCreateMeshFVF(m_nNumTri, vecVertex.size(), D3DXMESH_MANAGED, ST_PNT_VERTEX::FVF, g_pD3DDevice, &m_pMesh);
+
+	ST_PNT_VERTEX* vertex;
+	m_pMesh->LockVertexBuffer(0, (void**)&vertex);
+	memcpy(vertex, &vecVertex[0], vecVertex.size() * sizeof(ST_PNT_VERTEX));
+	m_pMesh->UnlockVertexBuffer();
+
+	WORD* index = 0;
+	m_pMesh->LockIndexBuffer(0, (void**)&index);
+	for (int i = 0; i < vecVertex.size(); ++i)
+	{
+		index[i] = i;
+	}
+	m_pMesh->UnlockIndexBuffer();
+
+	DWORD* attributeBuffer = 0;
+	m_pMesh->LockAttributeBuffer(0, &attributeBuffer);
+	for (int i = 0; i < m_nNumTri; ++i)
+	{
+		attributeBuffer[i] = 0;
+	}
+	m_pMesh->UnlockAttributeBuffer();
+
+	//optimize
+	std::vector<DWORD> vecAdjacencyBuffer(m_pMesh->GetNumFaces() * 3);
+	m_pMesh->GenerateAdjacency(0.0f, &vecAdjacencyBuffer[0]);
+
+	m_pMesh->OptimizeInplace(
+		D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_COMPACT | D3DXMESHOPT_VERTEXCACHE,
+		&vecAdjacencyBuffer[0], 0, 0, 0);
 }

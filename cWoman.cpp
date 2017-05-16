@@ -40,6 +40,8 @@ void cWoman::Update(iMap * pMap)
 
 void cWoman::Render()
 {
+	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
+
 	if (m_IsMoving)
 	{
 		if (m_pRootRun)	m_pRootRun->Render();

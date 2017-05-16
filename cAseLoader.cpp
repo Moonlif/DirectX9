@@ -51,6 +51,7 @@ cFrame * cAseLoader::Load(IN char * szFullPath)
 	return pRoot;
 }
 
+
 char * cAseLoader::GetToken()
 {
 	int nReadCnt = 0;
@@ -418,6 +419,9 @@ void cAseLoader::ProcessMESH(OUT cFrame * pFrame)
 
 	//Using VertexBuffer
 	pFrame->BuildVertexBuffer(vecVertex);
+
+	//Using Mesh
+	pFrame->BuildMesh(vecVertex);
 }
 
 void cAseLoader::ProcessMESH_VERTEX_LIST(OUT std::vector<D3DXVECTOR3>& vecV)
