@@ -121,6 +121,8 @@ void cObjLoader::LoadMtlLib(char * szFolder, char * szFile)
 	fopen_s(&fp, sFullPath.c_str(), "r");
 
 	std::string sMtlName;
+	int nCnt = 0;
+
 	while (true)
 	{
 		if (feof(fp)) break;
@@ -137,7 +139,11 @@ void cObjLoader::LoadMtlLib(char * szFolder, char * szFile)
 			sscanf_s(szTemp, "%*s %s", szMtlName, 1024);
 			sMtlName = std::string(szMtlName);
 			if (m_mapMtlTex.find(sMtlName) == m_mapMtlTex.end())
+			{
 				m_mapMtlTex[sMtlName] = new cMtlTex;
+				m_mapMtlTex[sMtlName]->SetAttrID(nCnt);
+				nCnt++;
+			}
 		}
 		else if (szTemp[0] == 'K')
 		{
@@ -247,7 +253,6 @@ LPD3DXMESH cObjLoader::LoadMesh(OUT std::vector<cMtlTex*> & vecMtlTex, IN char* 
 	std::vector<D3DXVECTOR3> vecVN;
 	std::vector<ST_PNT_VERTEX> vecVertex;
 
-	std::vector<ST_PNT_VERTEX> vecTotalVertex;
 	std::vector<DWORD> vecAttribute;
 
 	std::string sFullPath(szFolder);
@@ -273,43 +278,10 @@ LPD3DXMESH cObjLoader::LoadMesh(OUT std::vector<cMtlTex*> & vecMtlTex, IN char* 
 			char szMtlFile[1024];
 			sscanf_s(szTemp, "%*s %s", szMtlFile, 1024);
 			LoadMtlLib(szFolder, szMtlFile);
-			
-			for each(auto it in m_mapMtlTex)
-			{
-				cMtlTex* mtltex = new cMtlTex;
-				mtltex->SetMaterial(it.second->GetMaterial());
-				mtltex->SetTexture(it.second->GetTexture());
-				vecMtlTex.push_back(mtltex);
-			}
 		}
 		else if (szTemp[0] == 'g')
 		{
-			if (!vecVertex.empty())
-			{
-				for (int i = 0; i < vecVertex.size(); ++i)
-				{
-					vecTotalVertex.push_back(vecVertex[i]);
-				}
 
-				int attributeNum = -1;
-				int mapCountNum = 0;
-				for each (auto it in m_mapMtlTex)
-				{
-					if (it.first == sMtlName)
-					{
-						attributeNum = mapCountNum;
-						break;
-					}
-					else mapCountNum++;
-				}
-			
-				for (int i = 0; i < vecVertex.size() / 3; i++)
-				{
-					vecAttribute.push_back(attributeNum);
-				}
-
-				vecVertex.clear();
-			}
 		}
 		else if (szTemp[0] == 'v')
 		{
@@ -355,25 +327,33 @@ LPD3DXMESH cObjLoader::LoadMesh(OUT std::vector<cMtlTex*> & vecMtlTex, IN char* 
 				v.n = vecVN[nIndex[i][2] - 1];
 				vecVertex.push_back(v);
 			}
+
+			vecAttribute.push_back(m_mapMtlTex[sMtlName]->GetAttrID());
 		}
 	}
 
 	fclose(fp);
 
+	//氦磐 备己
+	vecMtlTex.resize(m_mapMtlTex.size());
+	for each(auto it in m_mapMtlTex)
+	{
+		vecMtlTex[it.second->GetAttrID()] = it.second;
+	}
 
 	//皋浆 备己
 	LPD3DXMESH pMesh = NULL;
 	{
-		D3DXCreateMeshFVF(vecTotalVertex.size() / 3, vecTotalVertex.size(), D3DXMESH_MANAGED, ST_PNT_VERTEX::FVF, g_pD3DDevice, &pMesh);
+		D3DXCreateMeshFVF(vecAttribute.size() , vecVertex.size(), D3DXMESH_MANAGED, ST_PNT_VERTEX::FVF, g_pD3DDevice, &pMesh);
 
 		ST_PNT_VERTEX* vertex;
 		pMesh->LockVertexBuffer(0, (void**)&vertex);
-		memcpy(vertex, &vecTotalVertex[0], vecTotalVertex.size() * sizeof(ST_PNT_VERTEX));
+		memcpy(vertex, &vecVertex[0], vecVertex.size() * sizeof(ST_PNT_VERTEX));
 		pMesh->UnlockVertexBuffer();
 
 		WORD* index = 0;
 		pMesh->LockIndexBuffer(0, (void**)&index);
-		for (int i = 0; i < vecTotalVertex.size(); ++i)
+		for (int i = 0; i < vecVertex.size(); ++i)
 		{
 			index[i] = i;
 		}
@@ -385,19 +365,13 @@ LPD3DXMESH cObjLoader::LoadMesh(OUT std::vector<cMtlTex*> & vecMtlTex, IN char* 
 		pMesh->UnlockAttributeBuffer();
 
 		//optimize
-		std::vector<DWORD> adjacencyBuffer(pMesh->GetNumFaces() * 3);
-		pMesh->GenerateAdjacency(0.0f, &adjacencyBuffer[0]);
+		std::vector<DWORD> vecAdjacencyBuffer(pMesh->GetNumFaces() * 3);
+		pMesh->GenerateAdjacency(0.0f, &vecAdjacencyBuffer[0]);
 
 		pMesh->OptimizeInplace(
 			D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_COMPACT | D3DXMESHOPT_VERTEXCACHE,
-			&adjacencyBuffer[0], 0, 0, 0);
+			&vecAdjacencyBuffer[0], 0, 0, 0);
 	}
-
-	for each(auto it in m_mapMtlTex)
-	{
-		SAFE_RELEASE(it.second);
-	}
-	m_mapMtlTex.clear();
 
 	return pMesh;
 }

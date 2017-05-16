@@ -65,7 +65,7 @@ cMainGame::~cMainGame()
 	SAFE_RELEASE(m_pMeshObjectMap);
 	for(int i=0; i<m_vecMtlTexObjectMap.size(); ++i)
 	{
-		SAFE_DELETE(m_vecMtlTexObjectMap[i]);
+		SAFE_RELEASE(m_vecMtlTexObjectMap[i]);
 	}
 
 	g_pTextureManager->Destroy();
@@ -140,11 +140,11 @@ void cMainGame::Render()
 	Text_Render();
 
 	m_dwTime1 = GetTickCount();
-	for (int i = 0; i < 500; ++i)
+	//for (int i = 0; i < 500; ++i)
 	Obj_Render();
 	
 	m_dwTime2 = GetTickCount();
-	for (int i = 0; i < 500; ++i)
+	//for (int i = 0; i < 500; ++i)
 	Mesh_Render();
 
 	m_dwTime3 = GetTickCount();
