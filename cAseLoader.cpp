@@ -51,49 +51,6 @@ cFrame * cAseLoader::Load(IN char * szFullPath)
 	return pRoot;
 }
 
-LPD3DXMESH cAseLoader::LoadMesh(std::vector<cMtlTex*>& vecMtlTex, IN char * szFullPath)
-{
-	cFrame* pRoot;
-	pRoot = Load(szFullPath);
-
-	std::vector<ST_PNT_VERTEX> vecVertex;
-	std::vector<DWORD> vecAttribute;
-
-	pRoot->SumMeshInfo(vecVertex, vecMtlTex, vecAttribute);
-	pRoot->Destroy();
-
-	LPD3DXMESH pMesh = NULL;
-	D3DXCreateMeshFVF(vecVertex.size()/3, vecVertex.size(), D3DXMESH_MANAGED, ST_PNT_VERTEX::FVF, g_pD3DDevice, &pMesh);
-
-	ST_PNT_VERTEX* vertex;
-	pMesh->LockVertexBuffer(0, (void**)&vertex);
-	memcpy(vertex, &vecVertex[0], vecVertex.size() * sizeof(ST_PNT_VERTEX));
-	pMesh->UnlockVertexBuffer();
-
-	WORD* index = 0;
-	pMesh->LockIndexBuffer(0, (void**)&index);
-	for (int i = 0; i < vecVertex.size(); ++i)
-	{
-		index[i] = i;
-	}
-	pMesh->UnlockIndexBuffer();
-
-	DWORD* attributeBuffer = 0;
-	pMesh->LockAttributeBuffer(0, &attributeBuffer);
-	memcpy(attributeBuffer, &vecAttribute[0], vecAttribute.size() * sizeof(DWORD));
-	pMesh->UnlockAttributeBuffer();
-
-	//optimize
-	std::vector<DWORD> vecAdjacencyBuffer(pMesh->GetNumFaces() * 3);
-	pMesh->GenerateAdjacency(0.0f, &vecAdjacencyBuffer[0]);
-
-	pMesh->OptimizeInplace(
-		D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_COMPACT | D3DXMESHOPT_VERTEXCACHE,
-		&vecAdjacencyBuffer[0], 0, 0, 0);
-
-	return pMesh;
-}
-
 
 char * cAseLoader::GetToken()
 {
@@ -458,10 +415,10 @@ void cAseLoader::ProcessMESH(OUT cFrame * pFrame)
 		D3DXVec3TransformNormal(&vecVertex[i].n, &vecVertex[i].n, &matInvWorld);
 	}
 
-	pFrame->SetVertex(vecVertex);
+	//pFrame->SetVertex(vecVertex);
 
 	//Using VertexBuffer
-	pFrame->BuildVertexBuffer(vecVertex);
+	//pFrame->BuildVertexBuffer(vecVertex);
 
 	//Using Mesh
 	pFrame->BuildMesh(vecVertex);

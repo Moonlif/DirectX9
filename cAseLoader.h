@@ -17,7 +17,6 @@ private:
 
 public:
 	cFrame* Load(IN char* szFullPath);
-	LPD3DXMESH LoadMesh(std::vector<cMtlTex*>& vecMtlTex, IN char* szFullPath);
 
 private:
 	char*	GetToken();

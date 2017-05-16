@@ -16,8 +16,5 @@ public:
 private:
 	cFrame* m_pRootStand;
 	cFrame* m_pRootRun;
-
-	LPD3DXMESH m_pMesh;
-	std::vector<cMtlTex*> m_vecMtlTex;
 };
 

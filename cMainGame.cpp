@@ -138,7 +138,7 @@ void cMainGame::Render()
 	m_dwTime2 = GetTickCount();
 	m_dwTime3 = GetTickCount();
 
-	Text_Render();
+	//Text_Render();
 
 	//Obj_Render();
 	Mesh_Render();
