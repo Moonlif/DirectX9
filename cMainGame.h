@@ -27,6 +27,9 @@ private:
 	cCamera*		m_pCamera;
 	cGrid*			m_pGrid;
 	cPyramid*		m_pPyramid;
+
+	//floor
+	std::vector<ST_PNT_VERTEX>	m_vecFloorVertex;
 	
 	vector<cGroup*> m_vecGroup;
 	iMap*			m_pMap;
@@ -42,7 +45,6 @@ private:
 	LPD3DXMESH		m_pMeshSphere;
 	D3DMATERIAL9	m_stMtlTeapot;
 	D3DMATERIAL9	m_stMtlSphere;
-
 	LPD3DXMESH				m_pMeshObjectMap;
 	std::vector<cMtlTex*>	m_vecMtlTexObjectMap;
 
@@ -73,5 +75,7 @@ public:
 	//mesh
 	void Setup_MeshObject();
 	void Mesh_Render();
+
+	D3DXVECTOR3 GetRayDirection();
 };
 

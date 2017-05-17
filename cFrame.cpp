@@ -58,9 +58,11 @@ void cFrame::Render()
 
 		//using vertexBuffer
 		//g_pD3DDevice->SetStreamSource(0, m_pVertexBuffer, 0, sizeof(ST_PNT_VERTEX));
+		//for(int i =0; i<20000; ++i)
 		//g_pD3DDevice->DrawPrimitive(D3DPT_TRIANGLELIST, 0, m_nNumTri);
 
 		//using mesh
+		//for(int i =0; i < 20000; ++i)
 		m_pMesh->DrawSubset(0);
 		
 	}

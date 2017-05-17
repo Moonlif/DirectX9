@@ -74,13 +74,12 @@ void cCamera::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_RBUTTONUP:
 		break;
 	case WM_MOUSEMOVE:
+		g_ptMouse.x = LOWORD(lParam);
+		g_ptMouse.y = HIWORD(lParam);
 		if (m_isLButtonDown)
 		{
-			POINT ptCurMouse;
-			ptCurMouse.x = LOWORD(lParam);
-			ptCurMouse.y = HIWORD(lParam);
-			float fDeltaX = (float)ptCurMouse.x - m_ptPrevMouse.x;
-			float fDeltaY = (float)ptCurMouse.y - m_ptPrevMouse.y;
+			float fDeltaX = (float)g_ptMouse.x - m_ptPrevMouse.x;
+			float fDeltaY = (float)g_ptMouse.y - m_ptPrevMouse.y;
 
 			m_vCamRotAngle.y += (fDeltaX / 100.f);
 			m_vCamRotAngle.x += (fDeltaY / 100.f);
@@ -88,7 +87,7 @@ void cCamera::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (m_vCamRotAngle.x > D3DX_PI / 3.0f)  m_vCamRotAngle.x = D3DX_PI / 3.0f;
 			if (m_vCamRotAngle.x < -D3DX_PI / 2.0f)  m_vCamRotAngle.x = -D3DX_PI / 2.0f;
 
-			m_ptPrevMouse = ptCurMouse;
+			m_ptPrevMouse = g_ptMouse;
 		}
 		break;
 	case WM_MOUSEWHEEL:

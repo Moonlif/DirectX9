@@ -71,7 +71,6 @@ void cGrid::Setup(int xAxisCount, int zAxisCount, float interval)
 	v.p = D3DXVECTOR3(0, 0, -xAxisCount / 2 - 1.0f); m_vecVertex.push_back(v);
 	v.p = D3DXVECTOR3(0, 0, xAxisCount / 2 + 1.0f); m_vecVertex.push_back(v);
 
-
 	//VertexBuffer
 	m_nNumLine = m_vecVertex.size() / 2;
 	g_pD3DDevice->CreateVertexBuffer(

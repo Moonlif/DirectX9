@@ -75,7 +75,7 @@ cMainGame::~cMainGame()
 void cMainGame::Setup()
 {
 	//texture test setting
-	//D3DXCreateTextureFromFile(g_pD3DDevice, "steam.png", &m_pTexture);
+	D3DXCreateTextureFromFile(g_pD3DDevice, "steam.png", &m_pTexture);
 
 	//m_pCubeMan = new cCubeMan;
 	//m_pCubeMan->Setup(false);
@@ -94,7 +94,7 @@ void cMainGame::Setup()
 	m_pCamera->Setup(&m_pWoman->GetPosition());
 
 	m_pGrid = new cGrid;
-	m_pGrid->Setup(10, 10, 1);
+	m_pGrid->Setup(20, 20, 1);
 	m_pPyramid = new cPyramid;
 	m_pPyramid->Setup();
 
@@ -109,6 +109,32 @@ void cMainGame::Setup()
 
 	cObjLoader objLoader;
 	m_pMeshObjectMap = objLoader.LoadMesh(m_vecMtlTexObjectMap, "objects", "Map.obj");
+
+	//floor setting
+	{
+		ST_PNT_VERTEX v;
+		v.n = D3DXVECTOR3(0, -1, 0);
+
+		v.p = D3DXVECTOR3(-10, 0, 10);
+		v.t = D3DXVECTOR2(0, 0);
+		m_vecFloorVertex.push_back(v);
+		v.p = D3DXVECTOR3(10, 0, 10);
+		v.t = D3DXVECTOR2(1, 0);
+		m_vecFloorVertex.push_back(v);
+		v.p = D3DXVECTOR3(10, 0, -10);
+		v.t = D3DXVECTOR2(1, 1);
+		m_vecFloorVertex.push_back(v);
+
+		v.p = D3DXVECTOR3(-10, 0, 10);
+		v.t = D3DXVECTOR2(0, 0);
+		m_vecFloorVertex.push_back(v);
+		v.p = D3DXVECTOR3(10, 0, -10);
+		v.t = D3DXVECTOR2(1, 1);
+		m_vecFloorVertex.push_back(v);
+		v.p = D3DXVECTOR3(-10, 0, -10);
+		v.t = D3DXVECTOR2(0, 1);
+		m_vecFloorVertex.push_back(v);
+	}
 }
 
 void cMainGame::Update()
@@ -120,6 +146,53 @@ void cMainGame::Update()
 	//if (m_pRootFrame) m_pRootFrame->Update(m_pRootFrame->GetKeyFrame(), NULL);
 
 	if (m_pWoman) m_pWoman->Update(NULL);
+
+	//lclick targeting
+	if (GetKeyState(VK_LBUTTON) & 0x8000)
+	{
+		D3DXVECTOR3 vRayPosition(0, 0, 0);
+		D3DXVECTOR3 vRayDirection = GetRayDirection();
+
+		D3DXMATRIXA16 matWorld;
+		D3DXMatrixIdentity(&matWorld);
+
+		D3DXVec3TransformCoord(&vRayPosition, &vRayPosition, &matWorld);
+		D3DXVec3TransformNormal(&vRayDirection, &vRayDirection, &matWorld);
+		D3DXVec3Normalize(&vRayDirection, &vRayDirection);
+	}
+
+	//rclick moving
+	if (GetKeyState(VK_RBUTTON) & 0x8000)
+	{
+		D3DXVECTOR3 vRayPosition(0, 0, 0);
+		D3DXVECTOR3 vRayDirection = GetRayDirection();
+
+		D3DXMATRIXA16 matWorld;
+		D3DXMatrixIdentity(&matWorld);
+
+		D3DXVec3TransformCoord(&vRayPosition, &vRayPosition, &matWorld);
+		D3DXVec3TransformNormal(&vRayDirection, &vRayDirection, &matWorld);
+		D3DXVec3Normalize(&vRayDirection, &vRayDirection);
+
+		for (size_t i = 0; i < m_vecFloorVertex.size(); i += 3)
+		{
+			float u, v, f;
+
+			if (D3DXIntersectTri(
+				&m_vecFloorVertex[i + 0].p,
+				&m_vecFloorVertex[i + 1].p,
+				&m_vecFloorVertex[i + 2].p,
+				&vRayPosition,
+				&vRayDirection,
+				&u,
+				&v,
+				&f))
+			{
+				m_pWoman->SetDestination(D3DXVECTOR3(u, 0, v));
+				break;
+			}
+		}
+	}
 }
 
 void cMainGame::Render()
@@ -127,8 +200,18 @@ void cMainGame::Render()
 	g_pD3DDevice->Clear(NULL, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(100, 100, 100), 1.0f, 0);
 	g_pD3DDevice->BeginScene();
 
-	if (m_pGrid) m_pGrid->Render();
+	//if (m_pGrid) m_pGrid->Render();
 	if (m_pPyramid) m_pPyramid->Render();
+
+	//floor render
+	{
+		D3DXMATRIXA16 matFloorWorld;
+		D3DXMatrixIdentity(&matFloorWorld);
+		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matFloorWorld);
+		g_pD3DDevice->SetTexture(0, m_pTexture);
+		g_pD3DDevice->SetFVF(ST_PNT_VERTEX::FVF);
+		g_pD3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, m_vecFloorVertex.size() / 3, &m_vecFloorVertex[0], sizeof(ST_PNT_VERTEX));
+	}
 
 	//if (m_pCubeMan) m_pCubeMan->Render();
 	//if (m_pRootFrame) m_pRootFrame->Render();
@@ -138,11 +221,10 @@ void cMainGame::Render()
 	m_dwTime2 = GetTickCount();
 	m_dwTime3 = GetTickCount();
 
-	//Text_Render();
+	Text_Render();
 
 	//Obj_Render();
-	Mesh_Render();
-
+	//Mesh_Render();
 
 	//texture test render
 	{
@@ -330,8 +412,11 @@ void cMainGame::Text_Render()
 
 		sText = sTick1 + " / " + sTick2;
 
+		//mouse point
+		sText = to_string(g_ptMouse.x) + ", " + to_string(g_ptMouse.y);
+
 		RECT rc;
-		SetRect(&rc, 100, 100, 100, 100);
+		SetRect(&rc, 0, 100, 100, 100);
 		if (m_pFont) m_pFont->DrawTextA(NULL, sText.c_str(), sText.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
 
 		//fps render
@@ -433,4 +518,20 @@ void cMainGame::Mesh_Render()
 			if(m_pMeshObjectMap) m_pMeshObjectMap->DrawSubset(i);
 		}
 	}
+}
+
+
+D3DXVECTOR3 cMainGame::GetRayDirection()
+{
+	D3DVIEWPORT9 vp;
+	g_pD3DDevice->GetViewport(&vp);
+
+	D3DXMATRIXA16 matProj;
+	g_pD3DDevice->GetTransform(D3DTS_PROJECTION, &matProj);
+
+	float px, py;
+	px = (((2.0f * g_ptMouse.x) / vp.Width) - 1.0f) / matProj(0, 0);
+	py = (((-2.0f * g_ptMouse.y) / vp.Height) + 1.0f) / matProj(1, 1);
+
+	return D3DXVECTOR3(px, py, 1.0f);
 }

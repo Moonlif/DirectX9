@@ -37,6 +37,7 @@ using namespace std;
 #pragma comment(lib, "d3dx9.lib")
 
 extern HWND g_hWnd;
+extern POINT g_ptMouse;
 extern int g_nFps;
 extern int g_nCountFps;
 

@@ -19,9 +19,10 @@ LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 HWND g_hWnd;
-cMainGame* g_pMainGame;
+POINT g_ptMouse;
 int g_nFps;
 int g_nCountFps;
+cMainGame* g_pMainGame;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,

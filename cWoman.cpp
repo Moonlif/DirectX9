@@ -5,6 +5,7 @@
 cWoman::cWoman()
 	: m_pRootStand(NULL)
 	, m_pRootRun(NULL)
+	, m_IsDestination(false)
 {
 }
 
@@ -26,7 +27,43 @@ void cWoman::Setup()
 
 void cWoman::Update(iMap * pMap)
 {
-	cCharacter::Update(pMap);
+	if (m_IsDestination == true)
+	{
+		m_IsMoving = true;
+
+		m_vDirection = m_vDestination - m_vPosition;
+		D3DXVec3Normalize(&m_vDirection, &m_vDirection);
+
+		D3DXVECTOR3 vPosition = m_vPosition;
+		//move
+		vPosition = vPosition + m_vDirection * 0.1f;
+
+		//check arrive
+		D3DXVECTOR3 vDistance;
+		vDistance = m_vDestination - m_vPosition;
+		if (D3DXVec3Length(&vDistance) < 0.1f) m_IsDestination = false;
+		
+		D3DXVECTOR3 zAxis(0, 0, 1);
+		m_vRotation.y = acosf(D3DXVec3Dot(&m_vDirection, &zAxis));
+		if (m_vDirection.x >= 0) m_vRotation.y += D3DX_PI;
+		else if (m_vDirection.x < 0) m_vRotation.y = -m_vRotation.y + D3DX_PI;
+
+		D3DXMATRIXA16 matR, matRX, matRY, matRZ;
+		D3DXMatrixRotationX(&matRX, m_vRotation.x);
+		D3DXMatrixRotationY(&matRY, m_vRotation.y);
+		D3DXMatrixRotationZ(&matRZ, m_vRotation.z);
+		matR = matRX * matRY * matRZ;
+
+		//check collision
+		if (pMap) pMap->GetHeight(vPosition.x, vPosition.y, vPosition.z);
+		m_vPosition = vPosition;
+
+		D3DXMATRIXA16 matT;
+		D3DXMatrixTranslation(&matT, m_vPosition.x, m_vPosition.y, m_vPosition.z);
+
+		m_matWorld = matR * matT;
+	}
+	else cCharacter::Update(pMap);
 
 	if (m_IsMoving)
 	{
@@ -50,4 +87,14 @@ void cWoman::Render()
 	{
 		if(m_pRootStand) m_pRootStand->Render();
 	}
+}
+
+void cWoman::SetDestination(D3DXVECTOR3 vDestination)
+{
+	D3DXVECTOR3 vDistance;
+	vDistance = vDestination - m_vPosition;
+	if (D3DXVec3Length(&vDistance) < 0.1f) return;
+
+	m_IsDestination = true;
+	m_vDestination = vDestination;
 }
