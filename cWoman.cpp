@@ -6,6 +6,7 @@ cWoman::cWoman()
 	: m_pRootStand(NULL)
 	, m_pRootRun(NULL)
 	, m_IsDestination(false)
+	, m_pMeshSphere(NULL)
 {
 }
 
@@ -14,6 +15,7 @@ cWoman::~cWoman()
 {
 	if (m_pRootStand) m_pRootStand->Destroy();
 	if (m_pRootRun) m_pRootRun->Destroy();
+	SAFE_RELEASE(m_pMeshSphere);
 }
 
 void cWoman::Setup()
@@ -23,6 +25,13 @@ void cWoman::Setup()
 	m_pRootStand = Load2.Load("woman/woman_01_all_stand.ASE");
 
 	m_vPosition = D3DXVECTOR3(0, 0, 0);
+
+	//sphere setup
+	D3DXCreateSphere(g_pD3DDevice, 0.5f, 10, 10, &m_pMeshSphere, NULL);
+	ZeroMemory(&m_stMtlSphere, sizeof(D3DMATERIAL9));
+	m_stMtlSphere.Ambient = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
+	m_stMtlSphere.Diffuse = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
+	m_stMtlSphere.Specular = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
 }
 
 void cWoman::Update(iMap * pMap)
@@ -43,6 +52,7 @@ void cWoman::Update(iMap * pMap)
 		vDistance = m_vDestination - m_vPosition;
 		if (D3DXVec3Length(&vDistance) < 0.1f) m_IsDestination = false;
 		
+		//rotation
 		D3DXVECTOR3 zAxis(0, 0, 1);
 		m_vRotation.y = acosf(D3DXVec3Dot(&m_vDirection, &zAxis));
 		if (m_vDirection.x >= 0) m_vRotation.y += D3DX_PI;
@@ -87,6 +97,23 @@ void cWoman::Render()
 	{
 		if(m_pRootStand) m_pRootStand->Render();
 	}
+
+	//sphere
+	{
+		g_pD3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
+
+		D3DXMATRIXA16 matWorld, matT;
+		D3DXMatrixIdentity(&matWorld);
+		D3DXMatrixIdentity(&matT);
+		D3DXMatrixTranslation(&matT, m_vPosition.x, m_vPosition.y + 0.5f, m_vPosition.z);
+		matWorld = matT;
+
+		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+		g_pD3DDevice->SetMaterial(&m_stMtlSphere);
+		m_pMeshSphere->DrawSubset(0);
+
+		g_pD3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+	}
 }
 
 void cWoman::SetDestination(D3DXVECTOR3 vDestination)
@@ -98,3 +125,4 @@ void cWoman::SetDestination(D3DXVECTOR3 vDestination)
 	m_IsDestination = true;
 	m_vDestination = vDestination;
 }
+

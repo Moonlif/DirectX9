@@ -47,6 +47,9 @@ private:
 	D3DMATERIAL9	m_stMtlSphere;
 	LPD3DXMESH				m_pMeshObjectMap;
 	std::vector<cMtlTex*>	m_vecMtlTexObjectMap;
+	bool m_bSelectWoman;
+	D3DXVECTOR3				m_vPositionSphere;
+	D3DXVECTOR3				m_vDestinationSphere;
 
 	//texture test
 	LPDIRECT3DTEXTURE9			m_pTexture;
@@ -75,7 +78,5 @@ public:
 	//mesh
 	void Setup_MeshObject();
 	void Mesh_Render();
-
-	D3DXVECTOR3 GetRayDirection();
 };
 

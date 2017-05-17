@@ -20,5 +20,6 @@ public:
 	void Setup(D3DXVECTOR3* pvTarget);
 	void Update();
 	void WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	D3DXVECTOR3 GetEye() { return m_vEye; }
 };
 

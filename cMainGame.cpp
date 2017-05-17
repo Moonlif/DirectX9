@@ -32,6 +32,9 @@ cMainGame::cMainGame()
 	, m_pMeshSphere(NULL)
 	, m_pMeshObjectMap(NULL)
 {	
+	m_bSelectWoman = true;
+	m_vDestinationSphere = D3DXVECTOR3(0, 0.5f, 0);
+	m_vPositionSphere = D3DXVECTOR3(0, 0.5f, 0);
 }
 
 
@@ -89,6 +92,7 @@ void cMainGame::Setup()
 
 	m_pWoman = new cWoman;
 	m_pWoman->Setup();
+	m_pWoman->SetMtlSphere(m_bSelectWoman);
 
 	m_pCamera = new cCamera;
 	m_pCamera->Setup(&m_pWoman->GetPosition());
@@ -139,60 +143,145 @@ void cMainGame::Setup()
 
 void cMainGame::Update()
 {
-	//if (m_pCubeMan) m_pCubeMan->Update(m_pMap);
-
 	if (m_pCamera) m_pCamera->Update();
 
+	//if (m_pCubeMan) m_pCubeMan->Update(m_pMap);
 	//if (m_pRootFrame) m_pRootFrame->Update(m_pRootFrame->GetKeyFrame(), NULL);
-
 	if (m_pWoman) m_pWoman->Update(NULL);
 
 	//lclick targeting
 	if (GetKeyState(VK_LBUTTON) & 0x8000)
 	{
+		D3DVIEWPORT9 vp;
+		g_pD3DDevice->GetViewport(&vp);
+
+		D3DXMATRIXA16 matProj;
+		g_pD3DDevice->GetTransform(D3DTS_PROJECTION, &matProj);
+
+		float px, py;
+		px = (((2.0f * g_ptMouse.x) / vp.Width) - 1.0f) / matProj(0, 0);
+		py = (((-2.0f * g_ptMouse.y) / vp.Height) + 1.0f) / matProj(1, 1);
+
 		D3DXVECTOR3 vRayPosition(0, 0, 0);
-		D3DXVECTOR3 vRayDirection = GetRayDirection();
+		D3DXVECTOR3 vRayDirection(px, py, 1.0f);
 
-		D3DXMATRIXA16 matWorld;
-		D3DXMatrixIdentity(&matWorld);
+		D3DXMATRIXA16 matView, matViewInverse;
+		g_pD3DDevice->GetTransform(D3DTS_VIEW, &matView);
+		D3DXMatrixInverse(&matViewInverse, 0, &matView);
 
-		D3DXVec3TransformCoord(&vRayPosition, &vRayPosition, &matWorld);
-		D3DXVec3TransformNormal(&vRayDirection, &vRayDirection, &matWorld);
+		D3DXVec3TransformCoord(&vRayPosition, &vRayPosition, &matViewInverse);
+		D3DXVec3TransformNormal(&vRayDirection, &vRayDirection, &matViewInverse);
 		D3DXVec3Normalize(&vRayDirection, &vRayDirection);
+
+		//collision
+		BOOL hitSphere = false;
+		{
+			D3DXVECTOR3 v = vRayPosition - m_vPositionSphere;
+			float b = 2.0f* D3DXVec3Dot(&vRayDirection, &v);
+			float c = D3DXVec3Dot(&v, &v) - (0.5f * 0.5f);
+
+			float discriminant = (b * b) - (4.0f * c);
+
+			if (discriminant > 0.0f)
+			{
+				discriminant = sqrt(discriminant);
+
+				float s0 = (-b + discriminant) / 2.0f;
+				float s1 = (-b - discriminant) / 2.0f;
+				if (s0 >= 0.0f || s1 >= 0.0f) hitSphere = true;
+			}
+			if (hitSphere == true) m_bSelectWoman = false;
+		}
+
+		BOOL hitWoman = false;
+		{
+			D3DXVECTOR3 vWoman = m_pWoman->GetPosition();
+			vWoman.y += 0.5f;
+			D3DXVECTOR3 v = vRayPosition - vWoman;
+			float b = 2.0f* D3DXVec3Dot(&vRayDirection, &v);
+			float c = D3DXVec3Dot(&v, &v) - (0.5f * 0.5f); //r*r
+
+			float discriminant = (b * b) - (4.0f * c);
+
+			if (discriminant > 0.0f)
+			{
+				discriminant = sqrt(discriminant);
+
+				float s0 = (-b + discriminant) / 2.0f;
+				float s1 = (-b - discriminant) / 2.0f;
+				if (s0 >= 0.0f || s1 >= 0.0f) hitWoman = true;
+			}
+			if (hitWoman == true) m_bSelectWoman = true;
+		}
+
+		//change color
+		m_pWoman->SetMtlSphere(m_bSelectWoman);
+		if (m_bSelectWoman)
+		{
+			m_pCamera->Setup(&m_pWoman->GetPosition());
+			m_stMtlSphere.Ambient = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
+			m_stMtlSphere.Diffuse = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
+			m_stMtlSphere.Specular = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
+		}
+		else
+		{
+			m_pCamera->Setup(&m_vPositionSphere);
+			m_stMtlSphere.Ambient = D3DXCOLOR(0.7f, 0.0f, 0.0f, 1.0f);
+			m_stMtlSphere.Diffuse = D3DXCOLOR(0.7f, 0.0f, 0.0f, 1.0f);
+			m_stMtlSphere.Specular = D3DXCOLOR(0.7f, 0.0f, 0.0f, 1.0f);
+		}
 	}
 
 	//rclick moving
 	if (GetKeyState(VK_RBUTTON) & 0x8000)
 	{
+		D3DVIEWPORT9 vp;
+		g_pD3DDevice->GetViewport(&vp);
+
+		D3DXMATRIXA16 matProj;
+		g_pD3DDevice->GetTransform(D3DTS_PROJECTION, &matProj);
+
+		float px, py;
+		px = (((2.0f * g_ptMouse.x) / vp.Width) - 1.0f) / matProj(0, 0);
+		py = (((-2.0f * g_ptMouse.y) / vp.Height) + 1.0f) / matProj(1, 1);
+
 		D3DXVECTOR3 vRayPosition(0, 0, 0);
-		D3DXVECTOR3 vRayDirection = GetRayDirection();
+		D3DXVECTOR3 vRayDirection(px, py, 1.0f);
 
-		D3DXMATRIXA16 matWorld;
-		D3DXMatrixIdentity(&matWorld);
+		D3DXMATRIXA16 matView, matViewInverse;
+		g_pD3DDevice->GetTransform(D3DTS_VIEW, &matView);
+		D3DXMatrixInverse(&matViewInverse, 0, &matView);
 
-		D3DXVec3TransformCoord(&vRayPosition, &vRayPosition, &matWorld);
-		D3DXVec3TransformNormal(&vRayDirection, &vRayDirection, &matWorld);
+		D3DXVec3TransformCoord(&vRayPosition, &vRayPosition, &matViewInverse);
+		D3DXVec3TransformNormal(&vRayDirection, &vRayDirection, &matViewInverse);
 		D3DXVec3Normalize(&vRayDirection, &vRayDirection);
 
 		for (size_t i = 0; i < m_vecFloorVertex.size(); i += 3)
 		{
 			float u, v, f;
+			D3DXVECTOR3 p0 = m_vecFloorVertex[i + 0].p;
+			D3DXVECTOR3 p1 = m_vecFloorVertex[i + 1].p;
+			D3DXVECTOR3 p2 = m_vecFloorVertex[i + 2].p;
 
-			if (D3DXIntersectTri(
-				&m_vecFloorVertex[i + 0].p,
-				&m_vecFloorVertex[i + 1].p,
-				&m_vecFloorVertex[i + 2].p,
-				&vRayPosition,
-				&vRayDirection,
-				&u,
-				&v,
-				&f))
+			if (D3DXIntersectTri(&p0, &p1, &p2, &vRayPosition, &vRayDirection, &u, &v, &f))
 			{
-				m_pWoman->SetDestination(D3DXVECTOR3(u, 0, v));
+				D3DXVECTOR3 vPoint = p0 + u*(p1 - p0) + v*(p2 - p0);
+				if (m_bSelectWoman) m_pWoman->SetDestination(D3DXVECTOR3(vPoint.x, 0, vPoint.z));
+				else m_vDestinationSphere = D3DXVECTOR3(vPoint.x, 0.5f, vPoint.z);
 				break;
 			}
 		}
 	}
+
+	//move the sphere
+	D3DXVECTOR3 dis = m_vDestinationSphere - m_vPositionSphere;
+	if (D3DXVec3Length(&dis) >= 0.1f)
+	{
+		D3DXVECTOR3 dir;
+		D3DXVec3Normalize(&dir, &dis);
+		m_vPositionSphere += dir * 0.05f;
+	}
+	else m_vPositionSphere = m_vDestinationSphere;
 }
 
 void cMainGame::Render()
@@ -224,7 +313,7 @@ void cMainGame::Render()
 	Text_Render();
 
 	//Obj_Render();
-	//Mesh_Render();
+	Mesh_Render();
 
 	//texture test render
 	{
@@ -362,8 +451,8 @@ void cMainGame::Create_Font()
 		D3DXFONT_DESC fontDiscription;
 		ZeroMemory(&fontDiscription, sizeof(D3DXFONT_DESC));
 
-		fontDiscription.Height = 50;
-		fontDiscription.Width = 25;
+		fontDiscription.Height = 30;
+		fontDiscription.Width = 15;
 		fontDiscription.Weight = FW_MEDIUM;
 		fontDiscription.Italic = false;
 		fontDiscription.CharSet = DEFAULT_CHARSET;
@@ -485,53 +574,43 @@ void cMainGame::Mesh_Render()
 
 	//sphere render
 	{
-		//D3DXMatrixIdentity(&matWorld);
-		//D3DXMatrixIdentity(&matS);
-		//D3DXMatrixIdentity(&matR);
+		g_pD3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
 
-		//D3DXMatrixScaling(&matS, 1.0f, 1.0f, 1.0f);
-		//matWorld = matS * matR;
-
-		//g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
-		//g_pD3DDevice->SetMaterial(&m_stMtlSphere);
-		//m_pMeshSphere->DrawSubset(0);
-	}
-
-	//map render
-	{
 		D3DXMatrixIdentity(&matWorld);
 		D3DXMatrixIdentity(&matS);
 		D3DXMatrixIdentity(&matR);
 		D3DXMatrixIdentity(&matT);
 
-		D3DXMatrixScaling(&matS, 0.01f, 0.01f, 0.01f);
-		D3DXMatrixRotationX(&matR, -D3DX_PI * 0.5f);
-		//D3DXMatrixTranslation(&matT, 20, 0, 0);
+		D3DXMatrixScaling(&matS, 1.0f, 1.0f, 1.0f);
+		D3DXMatrixTranslation(&matT, m_vPositionSphere.x, m_vPositionSphere.y, m_vPositionSphere.z);
 		matWorld = matS * matR * matT;
-		
+
 		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+		g_pD3DDevice->SetMaterial(&m_stMtlSphere);
+		m_pMeshSphere->DrawSubset(0);
 
-		for (int i = 0; i < m_vecMtlTexObjectMap.size(); ++i)
-		{
-			g_pD3DDevice->SetTexture(0, m_vecMtlTexObjectMap[i]->GetTexture());
-			g_pD3DDevice->SetMaterial(&m_vecMtlTexObjectMap[i]->GetMaterial());
-			if(m_pMeshObjectMap) m_pMeshObjectMap->DrawSubset(i);
-		}
+		g_pD3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
 	}
-}
 
+	//map render
+	{
+		//D3DXMatrixIdentity(&matWorld);
+		//D3DXMatrixIdentity(&matS);
+		//D3DXMatrixIdentity(&matR);
+		//D3DXMatrixIdentity(&matT);
 
-D3DXVECTOR3 cMainGame::GetRayDirection()
-{
-	D3DVIEWPORT9 vp;
-	g_pD3DDevice->GetViewport(&vp);
+		//D3DXMatrixScaling(&matS, 0.01f, 0.01f, 0.01f);
+		//D3DXMatrixRotationX(&matR, -D3DX_PI * 0.5f);
+		////D3DXMatrixTranslation(&matT, 20, 0, 0);
+		//matWorld = matS * matR * matT;
+		//
+		//g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
 
-	D3DXMATRIXA16 matProj;
-	g_pD3DDevice->GetTransform(D3DTS_PROJECTION, &matProj);
-
-	float px, py;
-	px = (((2.0f * g_ptMouse.x) / vp.Width) - 1.0f) / matProj(0, 0);
-	py = (((-2.0f * g_ptMouse.y) / vp.Height) + 1.0f) / matProj(1, 1);
-
-	return D3DXVECTOR3(px, py, 1.0f);
+		//for (int i = 0; i < m_vecMtlTexObjectMap.size(); ++i)
+		//{
+		//	g_pD3DDevice->SetTexture(0, m_vecMtlTexObjectMap[i]->GetTexture());
+		//	g_pD3DDevice->SetMaterial(&m_vecMtlTexObjectMap[i]->GetMaterial());
+		//	if(m_pMeshObjectMap) m_pMeshObjectMap->DrawSubset(i);
+		//}
+	}
 }
