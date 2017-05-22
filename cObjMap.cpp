@@ -44,3 +44,7 @@ bool cObjMap::GetHeight(IN float x, OUT float & y, IN float z)
 	return false;
 }
 
+void cObjMap::Render()
+{
+}
+

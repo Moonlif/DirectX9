@@ -18,6 +18,7 @@
 #include "cWoman.h"
 
 #include "cRawLoader.h"
+#include "cHeightMap.h"
 
 cMainGame::cMainGame()
 	: m_pCubePC(NULL)
@@ -86,8 +87,13 @@ void cMainGame::Setup()
 	//texture test setting
 	D3DXCreateTextureFromFile(g_pD3DDevice, "steam.png", &m_pTexture);
 
-	//m_pCubeMan = new cCubeMan;
-	//m_pCubeMan->Setup(false);
+	{
+		cCubeMan* pCubeman = new cCubeMan;
+		pCubeman->Setup(false);
+
+		m_pCubeMan = pCubeman;
+	}
+
 
 	//cObjLoader loadObj;
 	//loadObj.Load(m_vecGroup, "objects", "Map.obj");
@@ -99,7 +105,7 @@ void cMainGame::Setup()
 	m_pWoman->Setup();
 
 	m_pCamera = new cCamera;
-	m_pCamera->Setup(&m_pWoman->GetPosition());
+	m_pCamera->Setup(&m_pCubeMan->GetPosition());
 
 	//m_pGrid = new cGrid;
 	//m_pGrid->Setup(20, 20, 1);
@@ -113,25 +119,26 @@ void cMainGame::Setup()
 	Create_Font();
 
 	//mesh test
-	Setup_MeshObject();
-	cObjLoader objLoader;
-	m_pMeshObjectMap = objLoader.LoadMesh(m_vecMtlTexObjectMap, "objects", "Map.obj");
+	//Setup_MeshObject();
+	//cObjLoader objLoader;
+	//m_pMeshObjectMap = objLoader.LoadMesh(m_vecMtlTexObjectMap, "objects", "Map.obj");
 
 	//ray test setup
 	Setup_pickingObj();
 
 	//height map
-	Setup_heightMap();
+	Setup_HeightMap();
+	//Setup_heightMap();
 }
 
 void cMainGame::Update()
 {
 	if (m_pCamera) m_pCamera->Update();
 
-	//if (m_pCubeMan) m_pCubeMan->Update(m_pMap);
+	if (m_pCubeMan) m_pCubeMan->Update(m_pMap);
 	//if (m_pRootFrame) m_pRootFrame->Update(m_pRootFrame->GetKeyFrame(), NULL);
-	if (m_pWoman) m_pWoman->ApplyHeightMap(m_vecVertexHeightMap);
-	if (m_pWoman) m_pWoman->Update(NULL);
+	//if (m_pWoman) m_pWoman->ApplyHeightMap(m_vecVertexHeightMap);
+	if (m_pWoman) m_pWoman->Update(m_pMap);
 
 	//picking ray
 	{
@@ -164,13 +171,14 @@ void cMainGame::Render()
 	//Text_Render();
 	//Mesh_Render();
 
-	//if (m_pCubeMan) m_pCubeMan->Render();
+	if (m_pCubeMan) m_pCubeMan->Render();
 	//if (m_pRootFrame) m_pRootFrame->Render();
 	if (m_pWoman) m_pWoman->Render();
 
 	PickingObj_Render();
+	if (m_pMap) m_pMap->Render();
 
-	Render_heightMap();
+	//Render_heightMap();
 
 	//texture test render
 	{
@@ -582,6 +590,13 @@ void cMainGame::PickingObj_Render()
 	//m_pMeshSphere->DrawSubset(0);
 }
 
+
+void cMainGame::Setup_HeightMap()
+{
+	cHeightMap *pMap = new cHeightMap;
+	pMap->Setup("HeightMapData/", "HeightMap.raw", "terrain.jpg");
+	m_pMap = pMap;
+}
 
 //height map
 void cMainGame::Setup_heightMap()

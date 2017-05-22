@@ -6,6 +6,7 @@ class cGrid;
 class cPyramid;
 class cCubePC;
 class cCubeMan;
+class cCharacter;
 
 class cGroup;
 class iMap;
@@ -22,7 +23,7 @@ public:
 
 private:
 	cCubePC*		m_pCubePC;
-	cCubeMan*		m_pCubeMan;
+	cCharacter*		m_pCubeMan;
 	cCubeMan*		m_pCubeMan2;
 	cCamera*		m_pCamera;
 	cGrid*			m_pGrid;
@@ -91,6 +92,8 @@ public:
 	void PickingObj_Render();
 
 	//height map
+	void Setup_HeightMap();
+
 	void Setup_heightMap();
 	void Render_heightMap();
 };
