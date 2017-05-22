@@ -27,7 +27,7 @@ cCubeMan::~cCubeMan()
 	SAFE_RELEASE(m_pTexture);
 }
 
-void cCubeMan::Setup(bool isLerp)
+void cCubeMan::Setup()
 {
 	Set_Material();
 
@@ -72,8 +72,6 @@ void cCubeMan::Setup(bool isLerp)
 	m_vDest[3] = D3DXVECTOR3(-5.0f, 0, 0);
 	m_vDest[4] = D3DXVECTOR3(-2.5f, 0, -4.25f);
 	m_vDest[5] = D3DXVECTOR3(2.5f, 0, -4.25f);
-
-	m_IsLerp = isLerp;
 }
 
 void cCubeMan::Update(iMap* pMap)

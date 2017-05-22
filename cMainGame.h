@@ -4,15 +4,16 @@ class cCamera;
 
 class cGrid;
 class cPyramid;
+class iMap;
+
 class cCubePC;
-class cCubeMan;
 class cCharacter;
+class cCubeMan;
 
 class cGroup;
-class iMap;
 class cFrame;
-
 class cWoman;
+
 class cMtlTex;
 
 class cMainGame
@@ -22,21 +23,19 @@ public:
 	~cMainGame();
 
 private:
-	cCubePC*		m_pCubePC;
-	cCharacter*		m_pCubeMan;
-	cCubeMan*		m_pCubeMan2;
 	cCamera*		m_pCamera;
+
+	//map
 	cGrid*			m_pGrid;
 	cPyramid*		m_pPyramid;
-
-	vector<cGroup*> m_vecGroup;
+	vector<cGroup*> m_vecGroupMap;	//object map
 	iMap*			m_pMap;
+
+	//character
+	cCubePC*		m_pCubePC;
+	cCharacter*		m_pCubeMan;
 	cFrame*			m_pRootFrame;
 	cWoman*			m_pWoman;
-
-	//font
-	LPD3DXFONT		m_pFont;
-	ID3DXMesh*		m_p3DText;
 
 	//mesh
 	LPD3DXMESH		m_pMeshTeapot;
@@ -46,55 +45,42 @@ private:
 	LPD3DXMESH				m_pMeshObjectMap;
 	std::vector<cMtlTex*>	m_vecMtlTexObjectMap;
 
-	//ray test
-	std::vector<ST_SPHERE>	m_vecSphere;
-	D3DMATERIAL9			m_stMtlNone;
-	D3DMATERIAL9			m_stMtlPicked;
-	D3DMATERIAL9			m_stMtlPlane;
-	D3DXVECTOR3				m_vPickedPosition;
-	std::vector<ST_PNT_VERTEX>	m_vecPlaneVertex;
+	//ray
+	std::vector<ST_PNT_VERTEX>	m_vecVertexPlane;
+	D3DMATERIAL9				m_stMtlPlane;
+	LPDIRECT3DTEXTURE9			m_pTexturePlane;
+	D3DXVECTOR3					m_vPickedPosition;
 
-	//texture test
-	LPDIRECT3DTEXTURE9			m_pTexture;
-	std::vector<ST_PT_VERTEX>	m_vecVertex;
-
-	//timecheck
-	DWORD m_dwTime1;
-	DWORD m_dwTime2;
-	DWORD m_dwTime3;
-
-	//height map
-	LPD3DXMESH			m_pMeshHeightMap;
-	LPDIRECT3DTEXTURE9	m_pTextureHeightMap;
-	std::vector<ST_PNT_VERTEX> m_vecVertexHeightMap;
+	//font
+	LPD3DXFONT		m_pFont;
+	ID3DXMesh*		m_p3DText;
 
 public:
 	void Setup();
 	void Update();
 	void Render();
-
 	void WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
+	//light
 	void Set_Light();
+
+	//object
 	void Obj_Render();
 	void Load_Surface();
-
-	//font
-	void Create_Font();
-	void Text_Render();
 
 	//mesh
 	void Setup_MeshObject();
 	void Mesh_Render();
 
-	//ray test
-	void Setup_pickingObj();
-	void PickingObj_Render();
-
 	//height map
 	void Setup_HeightMap();
 
-	void Setup_heightMap();
-	void Render_heightMap();
+	//map for ray
+	void Setup_Plane();
+	void Plane_Render();
+
+	//font
+	void Create_Font();
+	void Text_Render();
 };
 

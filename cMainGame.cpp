@@ -1,82 +1,74 @@
 #include "stdafx.h"
 #include "cMainGame.h"
 
-#include "cCubePC.h"
 #include "cCamera.h"
-#include "cRay.h"
+
+//map
 #include "cGrid.h"
 #include "cPyramid.h"
-
-#include "cCubeMan.h"
-
-#include "cGroup.h"
-#include "cObjLoader.h"
 #include "cObjMap.h"
-
-#include "cFrame.h"
-#include "cAseLoader.h"
-#include "cWoman.h"
-
-#include "cRawLoader.h"
 #include "cHeightMap.h"
 
+//character
+#include "cCubePC.h"
+#include "cCubeMan.h"
+#include "cGroup.h"
+#include "cFrame.h"
+#include "cWoman.h"
+
+#include "cAseLoader.h"
+#include "cObjLoader.h"
+
+#include "cRay.h"
+
 cMainGame::cMainGame()
-	: m_pCubePC(NULL)
-	, m_pCamera(NULL)
+	: m_pCamera(NULL)
+
+	, m_pPyramid(NULL)
 	, m_pGrid(NULL)
-	, m_pTexture(NULL)
-	, m_pCubeMan(NULL)
-	, m_pCubeMan2(NULL)
 	, m_pMap(NULL)
+
+	, m_pCubePC(NULL)
+	, m_pCubeMan(NULL)
 	, m_pRootFrame(NULL)
 	, m_pWoman(NULL)
-	, m_pFont(NULL)
-	, m_p3DText(NULL)
+
 	, m_pMeshTeapot(NULL)
 	, m_pMeshSphere(NULL)
 	, m_pMeshObjectMap(NULL)
-	, m_pMeshHeightMap(NULL)
-	, m_pTextureHeightMap(NULL)
+
+	, m_pFont(NULL)
+	, m_p3DText(NULL)
 {	 
 }
 
 
 cMainGame::~cMainGame()
 {
-	SAFE_DELETE(m_pCubePC);
 	SAFE_DELETE(m_pCamera);
+
+	//map
 	SAFE_DELETE(m_pGrid);
 	SAFE_DELETE(m_pPyramid);
-	SAFE_DELETE(m_pCubeMan);
-	SAFE_DELETE(m_pCubeMan2);
 	SAFE_DELETE(m_pMap);
-	SAFE_DELETE(m_pWoman);
+	SAFE_RELEASE(m_pTexturePlane);
 
+	//character
+	SAFE_DELETE(m_pCubePC);
+	SAFE_DELETE(m_pCubeMan);
+	for (int i = 0; i < m_vecGroupMap.size(); ++i) SAFE_DELETE(m_vecGroupMap[i]);
 	if (m_pRootFrame) m_pRootFrame->Destroy();
-	for (int i = 0; i < m_vecGroup.size(); ++i)
-	{
-		SAFE_DELETE(m_vecGroup[i]);
-	}
-
-	//font
-	SAFE_RELEASE(m_pFont);
-	SAFE_RELEASE(m_p3DText);
-
-	//texture test
-	SAFE_RELEASE(m_pTexture);
+	SAFE_DELETE(m_pWoman);
 
 	//mesh
 	SAFE_RELEASE(m_pMeshTeapot);
 	SAFE_RELEASE(m_pMeshSphere);
 	SAFE_RELEASE(m_pMeshObjectMap);
-	for(int i=0; i<m_vecMtlTexObjectMap.size(); ++i)
-	{
-		SAFE_RELEASE(m_vecMtlTexObjectMap[i]);
-	}
+	for(int i=0; i<m_vecMtlTexObjectMap.size(); ++i) SAFE_RELEASE(m_vecMtlTexObjectMap[i]);
 
-	//heightMap
-	SAFE_RELEASE(m_pMeshHeightMap);
-	SAFE_RELEASE(m_pTextureHeightMap);
+	//font
+	SAFE_RELEASE(m_pFont);
+	SAFE_RELEASE(m_p3DText);
 
 	g_pTextureManager->Destroy();
 	g_pDeviceManager->Destroy();
@@ -84,51 +76,42 @@ cMainGame::~cMainGame()
 
 void cMainGame::Setup()
 {
-	//texture test setting
-	D3DXCreateTextureFromFile(g_pD3DDevice, "steam.png", &m_pTexture);
+	//light
+	Set_Light();
 
-	{
-		cCubeMan* pCubeman = new cCubeMan;
-		pCubeman->Setup(false);
+	m_pCamera = new cCamera;
+	m_pCamera->Setup(NULL);
 
-		m_pCubeMan = pCubeman;
-	}
-
-
+	//map
+	//m_pGrid = new cGrid;
+	//m_pGrid->Setup(20, 20, 1);
+	//m_pPyramid = new cPyramid;
+	//m_pPyramid->Setup();
 	//cObjLoader loadObj;
-	//loadObj.Load(m_vecGroup, "objects", "Map.obj");
-	//Load_Surface();
+	//loadObj.Load(m_vecGroupMap, "objects", "Map.obj");	//object map for render
+	//Load_Surface();	//object m_pMap for collision
+	Setup_HeightMap(); //heightMap for collision & render
+	Setup_Plane();	//map for ray
 
+	//character
+	//m_pCubePC = new cCubePC;
+	//m_pCubePC->Setup();
+	//m_pCubeMan = new cCubeMan;
+	//m_pCubeMan->Setup();
 	//cAseLoader loadAse;
 	//m_pRootFrame = loadAse.Load("woman/woman_01_all_stand.ASE");
 	m_pWoman = new cWoman;
 	m_pWoman->Setup();
 
-	m_pCamera = new cCamera;
-	m_pCamera->Setup(&m_pCubeMan->GetPosition());
-
-	//m_pGrid = new cGrid;
-	//m_pGrid->Setup(20, 20, 1);
-	m_pPyramid = new cPyramid;
-	m_pPyramid->Setup();
-
-	//light
-	Set_Light();
+	//mesh
+	//Setup_MeshObject();	//create Mesh : teapot & sphere
+	//cObjLoader objLoader;
+	//m_pMeshObjectMap = objLoader.LoadMesh(m_vecMtlTexObjectMap, "objects", "Map.obj");	//object map by mesh
 
 	//font
-	Create_Font();
+	//Create_Font();
 
-	//mesh test
-	//Setup_MeshObject();
-	//cObjLoader objLoader;
-	//m_pMeshObjectMap = objLoader.LoadMesh(m_vecMtlTexObjectMap, "objects", "Map.obj");
-
-	//ray test setup
-	Setup_pickingObj();
-
-	//height map
-	Setup_HeightMap();
-	//Setup_heightMap();
+	m_pCamera->ReTarget(&m_pWoman->GetPosition());
 }
 
 void cMainGame::Update()
@@ -136,27 +119,8 @@ void cMainGame::Update()
 	if (m_pCamera) m_pCamera->Update();
 
 	if (m_pCubeMan) m_pCubeMan->Update(m_pMap);
-	//if (m_pRootFrame) m_pRootFrame->Update(m_pRootFrame->GetKeyFrame(), NULL);
-	//if (m_pWoman) m_pWoman->ApplyHeightMap(m_vecVertexHeightMap);
-	if (m_pWoman) m_pWoman->Update(m_pMap);
-
-	//picking ray
-	{
-		//rclick moving
-		if (GetKeyState(VK_RBUTTON) & 0x8000)
-		{
-			cRay ray = cRay::RayAtWorldSpace(g_ptMouse.x, g_ptMouse.y);
-			for (int i = 0; i < m_vecPlaneVertex.size(); i += 3)
-			{
-				D3DXVECTOR3 v(0, 0, 0);
-				if (ray.IntersectTri(m_vecPlaneVertex[i + 0].p, m_vecPlaneVertex[i + 1].p, m_vecPlaneVertex[i + 2].p, v))
-				{
-					m_vPickedPosition = v;
-					m_pWoman->SetDestination(m_vPickedPosition);
-				}
-			}
-		}
-	}
+	if (m_pRootFrame) m_pRootFrame->Update(m_pRootFrame->GetKeyFrame(), NULL);
+	if (m_pWoman) m_pWoman->Update(m_pMap, m_vecVertexPlane);
 }
 
 void cMainGame::Render()
@@ -164,32 +128,24 @@ void cMainGame::Render()
 	g_pD3DDevice->Clear(NULL, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_XRGB(100, 100, 100), 1.0f, 0);
 	g_pD3DDevice->BeginScene();
 
+	//map
 	//if (m_pGrid) m_pGrid->Render();
-	if (m_pPyramid) m_pPyramid->Render();
+	//if (m_pPyramid) m_pPyramid->Render();
+	//if (m_vecGroupMap.size() > 0) Obj_Render();
+	if (m_pMap) m_pMap->Render();
+	if (m_vecVertexPlane.size() > 0) Plane_Render();
 
-	//Obj_Render();
-	//Text_Render();
-	//Mesh_Render();
-
-	if (m_pCubeMan) m_pCubeMan->Render();
+	//character
+	//if (m_pCubePC) m_pCubePC->Render();
+	//if (m_pCubeMan) m_pCubeMan->Render();
 	//if (m_pRootFrame) m_pRootFrame->Render();
 	if (m_pWoman) m_pWoman->Render();
 
-	PickingObj_Render();
-	if (m_pMap) m_pMap->Render();
+	//mesh
+	//Mesh_Render();
 
-	//Render_heightMap();
-
-	//texture test render
-	{
-		//D3DXMATRIXA16 matWorld;
-		//D3DXMatrixIdentity(&matWorld);
-		//g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
-		//g_pD3DDevice->SetTexture(0, m_pTexture);
-		//g_pD3DDevice->SetFVF(ST_PT_VERTEX::FVF);
-		//g_pD3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, m_vecVertex.size() / 3, &m_vecVertex[0], sizeof(ST_PT_VERTEX));
-		//g_pD3DDevice->SetTexture(0, NULL);
-	}
+	//text
+	//Text_Render();
 
 	g_pD3DDevice->EndScene();
 	g_pD3DDevice->Present(NULL, NULL, NULL, NULL);
@@ -200,44 +156,37 @@ void cMainGame::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	if (m_pCamera) m_pCamera->WndProc(hWnd, message, wParam, lParam);
 
 	//ray picking
-
-	//switch (message)
-	//{
-	//case WM_LBUTTONDOWN:
-	//{
-	//	cRay r = cRay::RayAtWorldSpace(LOWORD(lParam), HIWORD(lParam));
-	//	for (int i = 0; i < m_vecSphere.size(); i++)
-	//	{
-	//		m_vecSphere[i].isPicked = r.IsPicked(&m_vecSphere[i]);
-	//	}
-	//}
-	//	break;
-	//case WM_RBUTTONDOWN:
-	//{
-	//	cRay r = cRay::RayAtWorldSpace(LOWORD(lParam), HIWORD(lParam));
-	//	for (int i = 0; i < m_vecPlaneVertex.size(); i += 3)
-	//	{
-	//		D3DXVECTOR3 v(0, 0, 0);
-	//		if (r.IntersectTri(m_vecPlaneVertex[i + 0].p, m_vecPlaneVertex[i + 1].p, m_vecPlaneVertex[i + 2].p, v))
-	//		{
-	//			m_vPickedPosition = v;
-	//		}
-	//	}
-	//}
-	//	break;
-	//}
+	switch (message)
+	{
+	case WM_LBUTTONDOWN:
+		break;
+	case WM_RBUTTONDOWN:
+	{
+		//cRay r = cRay::RayAtWorldSpace(LOWORD(lParam), HIWORD(lParam));
+		//for (int i = 0; i < m_vecVertexPlane.size(); i += 3)
+		//{
+		//	D3DXVECTOR3 v(0, 0, 0);
+		//	if (r.IntersectTri(m_vecVertexPlane[i + 0].p, m_vecVertexPlane[i + 1].p, m_vecVertexPlane[i + 2].p, v))
+		//	{
+		//		m_vPickedPosition = v;
+		//	}
+		//}
+	}
+	break;
+	}
 }
+
 
 //light
 void cMainGame::Set_Light()
 {
-	//g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, false);
+	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
 	//g_pD3DDevice->SetRenderState(D3DRS_SPECULARENABLE, true);
 
 	D3DLIGHT9 stLight;
 	ZeroMemory(&stLight, sizeof(D3DLIGHT9));
 
-	//directional light (green)
+	//directional light
 	stLight.Type = D3DLIGHT_DIRECTIONAL;
 	stLight.Ambient = D3DXCOLOR(0.8f, 0.8f, 0.8f, 1.0f);
 	stLight.Diffuse = D3DXCOLOR(0.8f, 0.8f, 0.8f, 1.0f);
@@ -251,63 +200,66 @@ void cMainGame::Set_Light()
 	g_pD3DDevice->LightEnable(0, true);
 
 	//Light test for each type
-	/*
-	D3DLIGHT9 stLight;
-	ZeroMemory(&stLight, sizeof(D3DLIGHT9));
+	{
+		/*
+		D3DLIGHT9 stLight;
+		ZeroMemory(&stLight, sizeof(D3DLIGHT9));
 
-	//directional light (green)
-	stLight.Type = D3DLIGHT_DIRECTIONAL;
-	stLight.Ambient = D3DXCOLOR(0.0f, 0.2f, 0.0f, 1.0f);
-	stLight.Diffuse = D3DXCOLOR(0.0f, 0.2f, 0.0f, 1.0f);
-	stLight.Specular = D3DXCOLOR(0.0f, 0.2f, 0.0f, 1.0f);
+		//directional light (green)
+		stLight.Type = D3DLIGHT_DIRECTIONAL;
+		stLight.Ambient = D3DXCOLOR(0.0f, 0.2f, 0.0f, 1.0f);
+		stLight.Diffuse = D3DXCOLOR(0.0f, 0.2f, 0.0f, 1.0f);
+		stLight.Specular = D3DXCOLOR(0.0f, 0.2f, 0.0f, 1.0f);
 
-	D3DXVECTOR3 vDir(1.0f, -1.0f, 1.0f);
-	D3DXVec3Normalize(&vDir, &vDir);
-	stLight.Direction = vDir;
+		D3DXVECTOR3 vDir(1.0f, -1.0f, 1.0f);
+		D3DXVec3Normalize(&vDir, &vDir);
+		stLight.Direction = vDir;
 
-	g_pD3DDevice->SetLight(0, &stLight);
-	g_pD3DDevice->LightEnable(0, true);
+		g_pD3DDevice->SetLight(0, &stLight);
+		g_pD3DDevice->LightEnable(0, true);
 
 
-	//point light (blue)
-	D3DLIGHT9 pointLight;
-	ZeroMemory(&pointLight, sizeof(D3DLIGHT9));
-	pointLight.Type = D3DLIGHT_POINT;
-	pointLight.Ambient = D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f);
-	pointLight.Diffuse = D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f);
-	pointLight.Specular = D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f);
-	pointLight.Position = D3DXVECTOR3(0.0f, 0.0f, 3.0f);
-	pointLight.Range = 2.0f;
+		//point light (blue)
+		D3DLIGHT9 pointLight;
+		ZeroMemory(&pointLight, sizeof(D3DLIGHT9));
+		pointLight.Type = D3DLIGHT_POINT;
+		pointLight.Ambient = D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f);
+		pointLight.Diffuse = D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f);
+		pointLight.Specular = D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f);
+		pointLight.Position = D3DXVECTOR3(0.0f, 0.0f, 3.0f);
+		pointLight.Range = 2.0f;
 
-	pointLight.Attenuation0 = 0.0f;
-	pointLight.Attenuation1 = 0.0f;
-	pointLight.Attenuation2 = 0.0f;
+		pointLight.Attenuation0 = 0.0f;
+		pointLight.Attenuation1 = 0.0f;
+		pointLight.Attenuation2 = 0.0f;
 
-	g_pD3DDevice->SetLight(1, &pointLight);
-	g_pD3DDevice->LightEnable(1, true);
+		g_pD3DDevice->SetLight(1, &pointLight);
+		g_pD3DDevice->LightEnable(1, true);
 
-	//spot light (red)
-	D3DLIGHT9 spotLight;
-	ZeroMemory(&spotLight, sizeof(D3DLIGHT9));
-	spotLight.Type = D3DLIGHT_SPOT;
-	spotLight.Ambient = D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f);
-	spotLight.Diffuse = D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f);
-	spotLight.Specular = D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f);
-	spotLight.Position = D3DXVECTOR3(-4.0f, 1.0f, 0.0f);
-	spotLight.Direction = D3DXVECTOR3(1.0f, 0.0f, 0.0f);
-	spotLight.Falloff = 1.0f;
-	spotLight.Theta = D3DX_PI / 6.0f;
-	spotLight.Phi = D3DX_PI / 4.0f;
-	spotLight.Range = 5.0f;
+		//spot light (red)
+		D3DLIGHT9 spotLight;
+		ZeroMemory(&spotLight, sizeof(D3DLIGHT9));
+		spotLight.Type = D3DLIGHT_SPOT;
+		spotLight.Ambient = D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f);
+		spotLight.Diffuse = D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f);
+		spotLight.Specular = D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f);
+		spotLight.Position = D3DXVECTOR3(-4.0f, 1.0f, 0.0f);
+		spotLight.Direction = D3DXVECTOR3(1.0f, 0.0f, 0.0f);
+		spotLight.Falloff = 1.0f;
+		spotLight.Theta = D3DX_PI / 6.0f;
+		spotLight.Phi = D3DX_PI / 4.0f;
+		spotLight.Range = 5.0f;
 
-	spotLight.Attenuation0 = 0.0f;
-	spotLight.Attenuation1 = 0.0f;
-	spotLight.Attenuation2 = 0.0f;
+		spotLight.Attenuation0 = 0.0f;
+		spotLight.Attenuation1 = 0.0f;
+		spotLight.Attenuation2 = 0.0f;
 
-	g_pD3DDevice->SetLight(2, &spotLight);
-	g_pD3DDevice->LightEnable(2, true);
-	*/
+		g_pD3DDevice->SetLight(2, &spotLight);
+		g_pD3DDevice->LightEnable(2, true);
+		*/
+	}
 }
+
 
 //object
 void cMainGame::Obj_Render()
@@ -319,7 +271,7 @@ void cMainGame::Obj_Render()
 
 	g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
 	
-	for each (auto p in m_vecGroup)
+	for each (auto p in m_vecGroupMap)
 	{
 		p->Render();
 	}
@@ -333,98 +285,6 @@ void cMainGame::Load_Surface()
 	matWorld = matS * matR;
 
 	m_pMap = new cObjMap("objects", "map_surface.obj", &matWorld);
-}
-
-
-//font
-void cMainGame::Create_Font()
-{
-	//case 1: 2D
-	{
-		D3DXFONT_DESC fontDiscription;
-		ZeroMemory(&fontDiscription, sizeof(D3DXFONT_DESC));
-
-		fontDiscription.Height = 30;
-		fontDiscription.Width = 15;
-		fontDiscription.Weight = FW_MEDIUM;
-		fontDiscription.Italic = false;
-		fontDiscription.CharSet = DEFAULT_CHARSET;
-		fontDiscription.OutputPrecision = OUT_DEFAULT_PRECIS;
-		fontDiscription.PitchAndFamily = FF_DONTCARE;
-		AddFontResource("font/umberto.ttf");
-		strcpy_s(fontDiscription.FaceName, "umberto");
-
-		D3DXCreateFontIndirect(g_pD3DDevice, &fontDiscription, &m_pFont);
-	}
-
-	//case 2: 3D
-	{
-		HDC hdc = CreateCompatibleDC(0);
-		LOGFONT lf;
-		ZeroMemory(&lf, sizeof(LOGFONT));
-		lf.lfHeight = 25;
-		lf.lfWidth = 12;
-		lf.lfWeight = 500;	//0~1000 
-		lf.lfItalic = false;
-		lf.lfUnderline = false;
-		lf.lfStrikeOut = false;
-		lf.lfCharSet = DEFAULT_CHARSET;
-		strcpy_s(lf.lfFaceName, "±¼¸²Ã¼");
-		
-		HFONT hFont;
-		HFONT hFontOld;
-		hFont = CreateFontIndirect(&lf);
-		hFontOld = (HFONT)SelectObject(hdc, hFont);
-		D3DXCreateText(g_pD3DDevice, hdc, "Direct3D", 0.001f, 0.01f, &m_p3DText, 0, 0);
-		SelectObject(hdc, hFontOld);
-		DeleteObject(hFont);
-		DeleteDC(hdc);
-	}
-}
-
-void cMainGame::Text_Render()
-{
-	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
-
-	//case 1: 2D
-	{
-		std::string sText; // ("ABC 123 !@# °¡³ª´Ù¶ó");
-		std::string sTick1 = to_string(m_dwTime2 - m_dwTime1);
-		std::string sTick2 = to_string(m_dwTime3 - m_dwTime2);
-
-		sText = sTick1 + " / " + sTick2;
-
-		//mouse point
-		sText = to_string(g_ptMouse.x) + ", " + to_string(g_ptMouse.y);
-
-		RECT rc;
-		SetRect(&rc, 0, 100, 100, 100);
-		if (m_pFont) m_pFont->DrawTextA(NULL, sText.c_str(), sText.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
-
-		//fps render
-		std::string sText2 = to_string(g_nFps);
-		SetRect(&rc, 0, 0, 0, 0);
-		if (m_pFont) m_pFont->DrawTextA(NULL, sText2.c_str(), sText2.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
-
-	}
-	
-	//case 2: 3D
-	{
-		D3DXMATRIXA16 matWorld, matS, matR, matT;
-		D3DXMatrixIdentity(&matWorld);
-		D3DXMatrixIdentity(&matS);
-		D3DXMatrixIdentity(&matR);
-		D3DXMatrixIdentity(&matT);
-
-		D3DXMatrixScaling(&matS, 1.0f, 1.0f, 100.0f);
-		D3DXMatrixRotationY(&matR, -D3DX_PI / 8.0f);
-		D3DXMatrixTranslation(&matT, -2.0f, 2.0f, 0.0f);
-
-		matWorld = matS * matR * matT;
-
-		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
-		//m_p3DText->DrawSubset(0);
-	}
 }
 
 
@@ -447,8 +307,6 @@ void cMainGame::Setup_MeshObject()
 
 void cMainGame::Mesh_Render()
 {
-	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
-
 	D3DXMATRIXA16 matWorld, matS, matR, matT;
 
 	//teapot render
@@ -507,90 +365,7 @@ void cMainGame::Mesh_Render()
 	}
 }
 
-
-//ray test
-void cMainGame::Setup_pickingObj()
-{
-	for (int i = 0; i <= 10; ++i)
-	{
-		ST_SPHERE s;
-		s.fRadius = 0.5f;
-		s.vCenter = D3DXVECTOR3(0, 0, -10 + 2 * i);
-		m_vecSphere.push_back(s);
-	}
-
-	ZeroMemory(&m_stMtlNone, sizeof(D3DMATERIAL9));
-	m_stMtlNone.Ambient = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
-	m_stMtlNone.Diffuse = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
-	m_stMtlNone.Specular = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
-
-	ZeroMemory(&m_stMtlPicked, sizeof(D3DMATERIAL9));
-	m_stMtlPicked.Ambient = D3DXCOLOR(0.7f, 0.0f, 0.0f, 1.0f);
-	m_stMtlPicked.Diffuse = D3DXCOLOR(0.7f, 0.0f, 0.0f, 1.0f);
-	m_stMtlPicked.Specular = D3DXCOLOR(0.7f, 0.0f, 0.0f, 1.0f);
-
-	ZeroMemory(&m_stMtlPlane, sizeof(D3DMATERIAL9));
-	m_stMtlPlane.Ambient = D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f);
-	m_stMtlPlane.Diffuse = D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f);
-	m_stMtlPlane.Specular = D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f);
-
-	//plane setup
-	ST_PNT_VERTEX v;
-	v.n = D3DXVECTOR3(0, 1, 0);
-
-	v.p = D3DXVECTOR3(-10, 0, 10);
-	v.t = D3DXVECTOR2(0, 0);
-	m_vecPlaneVertex.push_back(v);
-	v.p = D3DXVECTOR3(10, 0, 10);
-	v.t = D3DXVECTOR2(1, 0);
-	m_vecPlaneVertex.push_back(v);
-	v.p = D3DXVECTOR3(10, 0, -10);
-	v.t = D3DXVECTOR2(1, 1);
-	m_vecPlaneVertex.push_back(v);
-
-	v.p = D3DXVECTOR3(-10, 0, 10);
-	v.t = D3DXVECTOR2(0, 0);
-	m_vecPlaneVertex.push_back(v);
-	v.p = D3DXVECTOR3(10, 0, -10);
-	v.t = D3DXVECTOR2(1, 1);
-	m_vecPlaneVertex.push_back(v);
-	v.p = D3DXVECTOR3(-10, 0, -10);
-	v.t = D3DXVECTOR2(0, 1);
-	m_vecPlaneVertex.push_back(v);
-}
-
-void cMainGame::PickingObj_Render()
-{
-	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
-
-	D3DXMATRIXA16 matWorld;
-	D3DXMATRIXA16 matPlaneWorld;
-	D3DXMatrixIdentity(&matPlaneWorld);
-	g_pD3DDevice->SetTransform(D3DTS_WORLD, &matPlaneWorld);
-	g_pD3DDevice->SetMaterial(&m_stMtlPlane);
-	g_pD3DDevice->SetTexture(0, m_pTexture);
-	g_pD3DDevice->SetFVF(ST_PNT_VERTEX::FVF);
-	g_pD3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, m_vecPlaneVertex.size() / 3, &m_vecPlaneVertex[0], sizeof(ST_PNT_VERTEX));
-
-	//for (int i = 0; i < m_vecSphere.size(); ++i)
-	//{
-	//	D3DXMatrixIdentity(&matWorld);
-	//	matWorld._41 = m_vecSphere[i].vCenter.x;
-	//	matWorld._42 = m_vecSphere[i].vCenter.y;
-	//	matWorld._43 = m_vecSphere[i].vCenter.z;
-	//	g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
-	//	g_pD3DDevice->SetMaterial(m_vecSphere[i].isPicked ? &m_stMtlPicked : &m_stMtlNone);
-	//	m_pMeshSphere->DrawSubset(0);
-	//}
-
-	////picking position check
-	//g_pD3DDevice->SetMaterial(&m_stMtlNone);
-	//D3DXMatrixTranslation(&matWorld, m_vPickedPosition.x, m_vPickedPosition.y, m_vPickedPosition.z);
-	//g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
-	//m_pMeshSphere->DrawSubset(0);
-}
-
-
+//heightMap
 void cMainGame::Setup_HeightMap()
 {
 	cHeightMap *pMap = new cHeightMap;
@@ -598,117 +373,142 @@ void cMainGame::Setup_HeightMap()
 	m_pMap = pMap;
 }
 
-//height map
-void cMainGame::Setup_heightMap()
+
+//map for ray
+void cMainGame::Setup_Plane()
 {
-	D3DXCreateTextureFromFile(g_pD3DDevice, "objects/terrain.jpg", &m_pTextureHeightMap);
-
-	std::vector<unsigned int> vecRawHeight;
-
-	cRawLoader rawloader;
-	rawloader.Load(vecRawHeight, "objects/HeightMap.raw");
-	vecRawHeight.pop_back();
-
-	//create mesh
-	DWORD tileX = 256;
-	DWORD tileZ = 256;
-
-	D3DXCreateMeshFVF(tileX*tileZ*2, (tileX + 1)*(tileZ + 1), D3DXMESH_MANAGED | D3DXMESH_32BIT, ST_PNT_VERTEX::FVF, g_pD3DDevice, &m_pMeshHeightMap);
-	
-	std::vector<ST_PNT_VERTEX> vecVertexHeightMap;
-	ST_PNT_VERTEX* vertex = 0;
-	for (int axisZ = 0; axisZ < (tileZ + 1); ++axisZ)
+	//plane setting
 	{
-		for (int axisX = 0; axisX < (tileX + 1); ++axisX)
-		{
-			int vIndex = axisX + axisZ*(tileZ + 1);
-			ST_PNT_VERTEX v;
-			v.p = D3DXVECTOR3(axisX, vecRawHeight[vIndex] * 0.1f, axisZ);
-			v.n = D3DXVECTOR3(0, 1, 0);
-			v.t = D3DXVECTOR2(axisX / 257.0f, axisZ / 257.0f);
+		ST_PNT_VERTEX v;
+		v.n = D3DXVECTOR3(0, -1, 0);
 
-			vecVertexHeightMap.push_back(v);
-		}
+		v.p = D3DXVECTOR3(-10, 0, 10);
+		v.t = D3DXVECTOR2(0, 0);
+		m_vecVertexPlane.push_back(v);
+		v.p = D3DXVECTOR3(10, 0, 10);
+		v.t = D3DXVECTOR2(1, 0);
+		m_vecVertexPlane.push_back(v);
+		v.p = D3DXVECTOR3(10, 0, -10);
+		v.t = D3DXVECTOR2(1, 1);
+		m_vecVertexPlane.push_back(v);
+
+		v.p = D3DXVECTOR3(-10, 0, 10);
+		v.t = D3DXVECTOR2(0, 0);
+		m_vecVertexPlane.push_back(v);
+		v.p = D3DXVECTOR3(10, 0, -10);
+		v.t = D3DXVECTOR2(1, 1);
+		m_vecVertexPlane.push_back(v);
+		v.p = D3DXVECTOR3(-10, 0, -10);
+		v.t = D3DXVECTOR2(0, 1);
+		m_vecVertexPlane.push_back(v);
 	}
-	//calc normal
-	for (int axisZ = 1; axisZ < tileZ; ++axisZ)
-	{
-		for (int axisX = 1; axisX < tileX; ++axisX)
-		{
-			int vIndex = axisX + axisZ*(tileZ + 1);
-			D3DXVECTOR3 left2right = vecVertexHeightMap[vIndex + 1].p - vecVertexHeightMap[vIndex - 1].p;
-			D3DXVECTOR3 up2down = vecVertexHeightMap[vIndex + (tileZ + 1)].p - vecVertexHeightMap[vIndex - (tileX + 1)].p;
-			D3DXVec3Cross(&vecVertexHeightMap[vIndex].n, &left2right, &up2down);
-		}
-	}
-	//m_pMeshHeightMap->LockVertexBuffer(0, (void**)&vertex);
-	//memcpy(vertex, &vecVertexHeightMap[0], vecVertexHeightMap.size() * sizeof(ST_PNT_VERTEX));
-	//m_pMeshHeightMap->UnlockVertexBuffer();
 
-	std::vector<WORD> vecIndex;
-	WORD* index = 0;
-	unsigned int indexCount = 0;
-	for (int axisZ = 0; axisZ < tileZ; ++axisZ)
-	{
-		for (int axisX = 0; axisX < tileX; ++axisX)
-		{
-			int vIndex = axisX + axisZ*(tileZ + 1);
-			//index[indexCount++] = vIndex;
-			//index[indexCount++] = vIndex + 1 + (tileZ + 1);
-			//index[indexCount++] = vIndex + 1;
-			//index[indexCount++] = vIndex;
-			//index[indexCount++] = vIndex + (tileZ + 1);
-			//index[indexCount++] = vIndex + 1 + (tileZ + 1);
+	D3DXCreateTextureFromFile(g_pD3DDevice, "steam.png", &m_pTexturePlane);
 
-			//vecIndex.push_back(vIndex);
-			//vecIndex.push_back(vIndex + 1 + (tileZ + 1));
-			//vecIndex.push_back(vIndex + 1);
-			//vecIndex.push_back(vIndex);
-			//vecIndex.push_back(vIndex + (tileZ + 1));
-			//vecIndex.push_back(vIndex + 1 + (tileZ + 1));
+	ZeroMemory(&m_stMtlPlane, sizeof(D3DMATERIAL9));
+	m_stMtlPlane.Ambient = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
+	m_stMtlPlane.Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
+	m_stMtlPlane.Specular = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 
-			m_vecVertexHeightMap.push_back(vecVertexHeightMap[vIndex]);
-			m_vecVertexHeightMap.push_back(vecVertexHeightMap[vIndex+ 1 + tileZ + 1]);
-			m_vecVertexHeightMap.push_back(vecVertexHeightMap[vIndex+ 1]);
-			m_vecVertexHeightMap.push_back(vecVertexHeightMap[vIndex]);
-			m_vecVertexHeightMap.push_back(vecVertexHeightMap[vIndex + tileZ + 1]);
-			m_vecVertexHeightMap.push_back(vecVertexHeightMap[vIndex + 1 + tileZ + 1]);
-		}
-	}
-	//m_pMeshHeightMap->LockIndexBuffer(0, (void**)&index);
-	//memcpy(index, &vecIndex[0], vecIndex.size() * sizeof(WORD));
-	//m_pMeshHeightMap->UnlockIndexBuffer();
-
-	//DWORD* attributeBuffer = 0;
-	//m_pMeshHeightMap->LockAttributeBuffer(0, &attributeBuffer);
-	//for (unsigned int i = 0; i < tileX*tileZ*2; ++i)
-	//{
-	//	attributeBuffer[i] = 0;
-	//}
-	//m_pMeshHeightMap->UnlockAttributeBuffer();
-
-	//optimize
-	//std::vector<DWORD> vecAdjacencyBuffer(m_pMeshHeightMap->GetNumFaces() * 3);
-	//m_pMeshHeightMap->GenerateAdjacency(0.0f, &vecAdjacencyBuffer[0]);
-
-	//m_pMeshHeightMap->OptimizeInplace(
-	//	D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_COMPACT | D3DXMESHOPT_VERTEXCACHE,
-	//	&vecAdjacencyBuffer[0], 0, 0, 0);
 }
 
-void cMainGame::Render_heightMap()
+void cMainGame::Plane_Render()
 {
-	//g_pD3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
+	D3DXMATRIXA16 matFloorWorld;
+	D3DXMatrixIdentity(&matFloorWorld);
+	g_pD3DDevice->SetTransform(D3DTS_WORLD, &matFloorWorld);
+	g_pD3DDevice->SetTexture(0, m_pTexturePlane);
+	g_pD3DDevice->SetMaterial(&m_stMtlPlane);
+	g_pD3DDevice->SetFVF(ST_PNT_VERTEX::FVF);
+	g_pD3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, m_vecVertexPlane.size() / 3, &m_vecVertexPlane[0], sizeof(ST_PNT_VERTEX));
+
+}
+
+
+//font
+void cMainGame::Create_Font()
+{
+	//case 1: 2D
+	{
+		D3DXFONT_DESC fontDiscription;
+		ZeroMemory(&fontDiscription, sizeof(D3DXFONT_DESC));
+
+		fontDiscription.Height = 30;
+		fontDiscription.Width = 15;
+		fontDiscription.Weight = FW_MEDIUM;
+		fontDiscription.Italic = false;
+		fontDiscription.CharSet = DEFAULT_CHARSET;
+		fontDiscription.OutputPrecision = OUT_DEFAULT_PRECIS;
+		fontDiscription.PitchAndFamily = FF_DONTCARE;
+		AddFontResource("font/umberto.ttf");
+		strcpy_s(fontDiscription.FaceName, "umberto");
+
+		D3DXCreateFontIndirect(g_pD3DDevice, &fontDiscription, &m_pFont);
+	}
+
+	//case 2: 3D
+	{
+		HDC hdc = CreateCompatibleDC(0);
+		LOGFONT lf;
+		ZeroMemory(&lf, sizeof(LOGFONT));
+		lf.lfHeight = 25;
+		lf.lfWidth = 12;
+		lf.lfWeight = 500;	//0~1000 
+		lf.lfItalic = false;
+		lf.lfUnderline = false;
+		lf.lfStrikeOut = false;
+		lf.lfCharSet = DEFAULT_CHARSET;
+		strcpy_s(lf.lfFaceName, "±¼¸²Ã¼");
+
+		HFONT hFont;
+		HFONT hFontOld;
+		hFont = CreateFontIndirect(&lf);
+		hFontOld = (HFONT)SelectObject(hdc, hFont);
+		D3DXCreateText(g_pD3DDevice, hdc, "Direct3D", 0.001f, 0.01f, &m_p3DText, 0, 0);
+		SelectObject(hdc, hFontOld);
+		DeleteObject(hFont);
+		DeleteDC(hdc);
+	}
+}
+
+void cMainGame::Text_Render()
+{
 	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
 
-	D3DXMATRIXA16 matWorld;
-	D3DXMatrixIdentity(&matWorld);
-	g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
-	g_pD3DDevice->SetTexture(0, m_pTextureHeightMap);
-	g_pD3DDevice->SetFVF(ST_PNT_VERTEX::FVF);
+	//case 1: 2D
+	{
+		std::string sText;
 
-	g_pD3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, m_vecVertexHeightMap.size() / 3, &m_vecVertexHeightMap[0], sizeof(ST_PNT_VERTEX));
-	//m_pMeshHeightMap->DrawSubset(0);
+		//mouse point
+		sText = to_string(g_ptMouse.x) + ", " + to_string(g_ptMouse.y);
 
-	//g_pD3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+		//text position
+		RECT rc;
+		SetRect(&rc, 0, 100, 100, 100);
+
+		if (m_pFont) m_pFont->DrawTextA(NULL, sText.c_str(), sText.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
+
+		//fps render
+		std::string sText2 = to_string(g_nFps);
+		SetRect(&rc, 0, 0, 0, 0);
+		if (m_pFont) m_pFont->DrawTextA(NULL, sText2.c_str(), sText2.length(), &rc, DT_LEFT | DT_TOP | DT_NOCLIP, D3DCOLOR_XRGB(88, 12, 8));
+	}
+
+	//case 2: 3D
+	{
+		D3DXMATRIXA16 matWorld, matS, matR, matT;
+		D3DXMatrixIdentity(&matWorld);
+		D3DXMatrixIdentity(&matS);
+		D3DXMatrixIdentity(&matR);
+		D3DXMatrixIdentity(&matT);
+
+		D3DXMatrixScaling(&matS, 1.0f, 1.0f, 100.0f);
+		D3DXMatrixRotationY(&matR, -D3DX_PI / 8.0f);
+		D3DXMatrixTranslation(&matT, -2.0f, 2.0f, 0.0f);
+
+		matWorld = matS * matR * matT;
+
+		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+		m_p3DText->DrawSubset(0);
+	}
 }

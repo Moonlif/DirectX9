@@ -13,7 +13,7 @@ public:
 	D3DMATERIAL9	m_stMtl;
 	LPDIRECT3DTEXTURE9 m_pTexture;
 
-	virtual void Setup(bool isLerp);
+	virtual void Setup();
 	virtual void Update(iMap* pMap) override;
 	virtual void Render() override;
 

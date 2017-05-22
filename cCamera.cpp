@@ -100,3 +100,8 @@ void cCamera::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 }
+
+void cCamera::ReTarget(D3DXVECTOR3 * pvTarget)
+{
+	m_pvTarget = pvTarget;
+}
