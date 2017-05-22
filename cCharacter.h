@@ -20,8 +20,6 @@ protected:
 	float m_fGravity;
 
 	iMap* m_pMap;
-	//vector<cGroup*> m_vecGroup;
-	//vector<cGroup*> m_vecGroup2;
 
 public:
 	virtual ~cCharacter();
@@ -32,7 +30,6 @@ public:
 
 	virtual D3DXVECTOR3& GetPosition();
 	
-	//float FloorIntersect();
 	//float WallIntersect(bool isFront);
 };
 

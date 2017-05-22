@@ -28,9 +28,6 @@ private:
 	cGrid*			m_pGrid;
 	cPyramid*		m_pPyramid;
 
-	//floor
-	std::vector<ST_PNT_VERTEX>	m_vecFloorVertex;
-	
 	vector<cGroup*> m_vecGroup;
 	iMap*			m_pMap;
 	cFrame*			m_pRootFrame;
@@ -47,9 +44,14 @@ private:
 	D3DMATERIAL9	m_stMtlSphere;
 	LPD3DXMESH				m_pMeshObjectMap;
 	std::vector<cMtlTex*>	m_vecMtlTexObjectMap;
-	bool m_bSelectWoman;
-	D3DXVECTOR3				m_vPositionSphere;
-	D3DXVECTOR3				m_vDestinationSphere;
+
+	//ray test
+	std::vector<ST_SPHERE>	m_vecSphere;
+	D3DMATERIAL9			m_stMtlNone;
+	D3DMATERIAL9			m_stMtlPicked;
+	D3DMATERIAL9			m_stMtlPlane;
+	D3DXVECTOR3				m_vPickedPosition;
+	std::vector<ST_PNT_VERTEX>	m_vecPlaneVertex;
 
 	//texture test
 	LPDIRECT3DTEXTURE9			m_pTexture;
@@ -59,6 +61,11 @@ private:
 	DWORD m_dwTime1;
 	DWORD m_dwTime2;
 	DWORD m_dwTime3;
+
+	//height map
+	LPD3DXMESH			m_pMeshHeightMap;
+	LPDIRECT3DTEXTURE9	m_pTextureHeightMap;
+	std::vector<ST_PNT_VERTEX> m_vecVertexHeightMap;
 
 public:
 	void Setup();
@@ -78,5 +85,13 @@ public:
 	//mesh
 	void Setup_MeshObject();
 	void Mesh_Render();
+
+	//ray test
+	void Setup_pickingObj();
+	void PickingObj_Render();
+
+	//height map
+	void Setup_heightMap();
+	void Render_heightMap();
 };
 

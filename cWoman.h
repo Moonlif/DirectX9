@@ -13,6 +13,7 @@ public:
 	virtual void Update(iMap* pMap);
 	virtual void Render();
 
+	//picking test
 	void SetDestination(D3DXVECTOR3 vDestination);
 	LPD3DXMESH GetMeshSphere() { return m_pMeshSphere; }
 	void SetMtlSphere(bool isSelected)
@@ -30,6 +31,9 @@ public:
 			m_stMtlSphere.Specular = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
 		}
 	}
+
+	//height map
+	void ApplyHeightMap(std::vector<ST_PNT_VERTEX>& vecVertexHeightMap);
 
 private:
 	cFrame* m_pRootStand;

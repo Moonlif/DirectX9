@@ -94,6 +94,14 @@ struct ST_PNT_VERTEX
 	enum { FVF = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX1 };
 };
 
+struct ST_PN_VERTEX
+{
+	D3DXVECTOR3 p;
+	D3DXVECTOR3 n;
+
+	enum { FVF = D3DFVF_XYZ | D3DFVF_NORMAL };
+};
+
 struct ST_PT_VERTEX
 {
 	D3DXVECTOR3 p;
@@ -121,6 +129,15 @@ struct ST_ROT_SAMPLE
 	{
 		D3DXQuaternionIdentity(&q);
 	}
+};
+
+struct ST_SPHERE
+{
+	float fRadius;
+	D3DXVECTOR3 vCenter;
+	bool isPicked;
+
+	ST_SPHERE() : fRadius(0.0f), vCenter(0, 0, 0), isPicked(false) {}
 };
 
 #include "cObject.h"

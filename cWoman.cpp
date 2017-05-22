@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "cWoman.h"
 #include "cAseLoader.h"
+#include "cRawLoader.h"
 
 cWoman::cWoman()
 	: m_pRootStand(NULL)
@@ -124,5 +125,36 @@ void cWoman::SetDestination(D3DXVECTOR3 vDestination)
 
 	m_IsDestination = true;
 	m_vDestination = vDestination;
+}
+
+void cWoman::ApplyHeightMap(std::vector<ST_PNT_VERTEX>& vecVertexHeightMap)
+{
+	if (m_vPosition.x < 0 || m_vPosition.z < 0) return;
+
+	int x = (int)m_vPosition.x;
+	int z = (int)m_vPosition.z;
+	int surfaceIndex = x + z * 256;
+
+	D3DXVECTOR3 vRayPos(m_vPosition.x, 1000, m_vPosition.z);
+	D3DXVECTOR3 vRayDir(0, -1, 0);
+
+	for (int i = surfaceIndex * 6; i < surfaceIndex * 6 + 6; i += 3)
+	{
+		float u, v, f;
+
+		if (D3DXIntersectTri(
+			&vecVertexHeightMap[i + 0].p,
+			&vecVertexHeightMap[i + 1].p,
+			&vecVertexHeightMap[i + 2].p,
+			&vRayPos,
+			&vRayDir,
+			&u,
+			&v,
+			&f))
+		{
+			m_vPosition.y = 1000 - f;
+			return;
+		}
+	}
 }
 

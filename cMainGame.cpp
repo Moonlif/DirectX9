@@ -3,6 +3,7 @@
 
 #include "cCubePC.h"
 #include "cCamera.h"
+#include "cRay.h"
 #include "cGrid.h"
 #include "cPyramid.h"
 
@@ -15,6 +16,8 @@
 #include "cFrame.h"
 #include "cAseLoader.h"
 #include "cWoman.h"
+
+#include "cRawLoader.h"
 
 cMainGame::cMainGame()
 	: m_pCubePC(NULL)
@@ -31,10 +34,9 @@ cMainGame::cMainGame()
 	, m_pMeshTeapot(NULL)
 	, m_pMeshSphere(NULL)
 	, m_pMeshObjectMap(NULL)
-{	
-	m_bSelectWoman = true;
-	m_vDestinationSphere = D3DXVECTOR3(0, 0.5f, 0);
-	m_vPositionSphere = D3DXVECTOR3(0, 0.5f, 0);
+	, m_pMeshHeightMap(NULL)
+	, m_pTextureHeightMap(NULL)
+{	 
 }
 
 
@@ -71,6 +73,10 @@ cMainGame::~cMainGame()
 		SAFE_RELEASE(m_vecMtlTexObjectMap[i]);
 	}
 
+	//heightMap
+	SAFE_RELEASE(m_pMeshHeightMap);
+	SAFE_RELEASE(m_pTextureHeightMap);
+
 	g_pTextureManager->Destroy();
 	g_pDeviceManager->Destroy();
 }
@@ -89,16 +95,14 @@ void cMainGame::Setup()
 
 	//cAseLoader loadAse;
 	//m_pRootFrame = loadAse.Load("woman/woman_01_all_stand.ASE");
-
 	m_pWoman = new cWoman;
 	m_pWoman->Setup();
-	m_pWoman->SetMtlSphere(m_bSelectWoman);
 
 	m_pCamera = new cCamera;
 	m_pCamera->Setup(&m_pWoman->GetPosition());
 
-	m_pGrid = new cGrid;
-	m_pGrid->Setup(20, 20, 1);
+	//m_pGrid = new cGrid;
+	//m_pGrid->Setup(20, 20, 1);
 	m_pPyramid = new cPyramid;
 	m_pPyramid->Setup();
 
@@ -110,35 +114,14 @@ void cMainGame::Setup()
 
 	//mesh test
 	Setup_MeshObject();
-
 	cObjLoader objLoader;
 	m_pMeshObjectMap = objLoader.LoadMesh(m_vecMtlTexObjectMap, "objects", "Map.obj");
 
-	//floor setting
-	{
-		ST_PNT_VERTEX v;
-		v.n = D3DXVECTOR3(0, -1, 0);
+	//ray test setup
+	Setup_pickingObj();
 
-		v.p = D3DXVECTOR3(-10, 0, 10);
-		v.t = D3DXVECTOR2(0, 0);
-		m_vecFloorVertex.push_back(v);
-		v.p = D3DXVECTOR3(10, 0, 10);
-		v.t = D3DXVECTOR2(1, 0);
-		m_vecFloorVertex.push_back(v);
-		v.p = D3DXVECTOR3(10, 0, -10);
-		v.t = D3DXVECTOR2(1, 1);
-		m_vecFloorVertex.push_back(v);
-
-		v.p = D3DXVECTOR3(-10, 0, 10);
-		v.t = D3DXVECTOR2(0, 0);
-		m_vecFloorVertex.push_back(v);
-		v.p = D3DXVECTOR3(10, 0, -10);
-		v.t = D3DXVECTOR2(1, 1);
-		m_vecFloorVertex.push_back(v);
-		v.p = D3DXVECTOR3(-10, 0, -10);
-		v.t = D3DXVECTOR2(0, 1);
-		m_vecFloorVertex.push_back(v);
-	}
+	//height map
+	Setup_heightMap();
 }
 
 void cMainGame::Update()
@@ -147,141 +130,26 @@ void cMainGame::Update()
 
 	//if (m_pCubeMan) m_pCubeMan->Update(m_pMap);
 	//if (m_pRootFrame) m_pRootFrame->Update(m_pRootFrame->GetKeyFrame(), NULL);
+	if (m_pWoman) m_pWoman->ApplyHeightMap(m_vecVertexHeightMap);
 	if (m_pWoman) m_pWoman->Update(NULL);
 
-	//lclick targeting
-	if (GetKeyState(VK_LBUTTON) & 0x8000)
+	//picking ray
 	{
-		D3DVIEWPORT9 vp;
-		g_pD3DDevice->GetViewport(&vp);
-
-		D3DXMATRIXA16 matProj;
-		g_pD3DDevice->GetTransform(D3DTS_PROJECTION, &matProj);
-
-		float px, py;
-		px = (((2.0f * g_ptMouse.x) / vp.Width) - 1.0f) / matProj(0, 0);
-		py = (((-2.0f * g_ptMouse.y) / vp.Height) + 1.0f) / matProj(1, 1);
-
-		D3DXVECTOR3 vRayPosition(0, 0, 0);
-		D3DXVECTOR3 vRayDirection(px, py, 1.0f);
-
-		D3DXMATRIXA16 matView, matViewInverse;
-		g_pD3DDevice->GetTransform(D3DTS_VIEW, &matView);
-		D3DXMatrixInverse(&matViewInverse, 0, &matView);
-
-		D3DXVec3TransformCoord(&vRayPosition, &vRayPosition, &matViewInverse);
-		D3DXVec3TransformNormal(&vRayDirection, &vRayDirection, &matViewInverse);
-		D3DXVec3Normalize(&vRayDirection, &vRayDirection);
-
-		//collision
-		BOOL hitSphere = false;
+		//rclick moving
+		if (GetKeyState(VK_RBUTTON) & 0x8000)
 		{
-			D3DXVECTOR3 v = vRayPosition - m_vPositionSphere;
-			float b = 2.0f* D3DXVec3Dot(&vRayDirection, &v);
-			float c = D3DXVec3Dot(&v, &v) - (0.5f * 0.5f);
-
-			float discriminant = (b * b) - (4.0f * c);
-
-			if (discriminant > 0.0f)
+			cRay ray = cRay::RayAtWorldSpace(g_ptMouse.x, g_ptMouse.y);
+			for (int i = 0; i < m_vecPlaneVertex.size(); i += 3)
 			{
-				discriminant = sqrt(discriminant);
-
-				float s0 = (-b + discriminant) / 2.0f;
-				float s1 = (-b - discriminant) / 2.0f;
-				if (s0 >= 0.0f || s1 >= 0.0f) hitSphere = true;
-			}
-			if (hitSphere == true) m_bSelectWoman = false;
-		}
-
-		BOOL hitWoman = false;
-		{
-			D3DXVECTOR3 vWoman = m_pWoman->GetPosition();
-			vWoman.y += 0.5f;
-			D3DXVECTOR3 v = vRayPosition - vWoman;
-			float b = 2.0f* D3DXVec3Dot(&vRayDirection, &v);
-			float c = D3DXVec3Dot(&v, &v) - (0.5f * 0.5f); //r*r
-
-			float discriminant = (b * b) - (4.0f * c);
-
-			if (discriminant > 0.0f)
-			{
-				discriminant = sqrt(discriminant);
-
-				float s0 = (-b + discriminant) / 2.0f;
-				float s1 = (-b - discriminant) / 2.0f;
-				if (s0 >= 0.0f || s1 >= 0.0f) hitWoman = true;
-			}
-			if (hitWoman == true) m_bSelectWoman = true;
-		}
-
-		//change color
-		m_pWoman->SetMtlSphere(m_bSelectWoman);
-		if (m_bSelectWoman)
-		{
-			m_pCamera->Setup(&m_pWoman->GetPosition());
-			m_stMtlSphere.Ambient = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
-			m_stMtlSphere.Diffuse = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
-			m_stMtlSphere.Specular = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
-		}
-		else
-		{
-			m_pCamera->Setup(&m_vPositionSphere);
-			m_stMtlSphere.Ambient = D3DXCOLOR(0.7f, 0.0f, 0.0f, 1.0f);
-			m_stMtlSphere.Diffuse = D3DXCOLOR(0.7f, 0.0f, 0.0f, 1.0f);
-			m_stMtlSphere.Specular = D3DXCOLOR(0.7f, 0.0f, 0.0f, 1.0f);
-		}
-	}
-
-	//rclick moving
-	if (GetKeyState(VK_RBUTTON) & 0x8000)
-	{
-		D3DVIEWPORT9 vp;
-		g_pD3DDevice->GetViewport(&vp);
-
-		D3DXMATRIXA16 matProj;
-		g_pD3DDevice->GetTransform(D3DTS_PROJECTION, &matProj);
-
-		float px, py;
-		px = (((2.0f * g_ptMouse.x) / vp.Width) - 1.0f) / matProj(0, 0);
-		py = (((-2.0f * g_ptMouse.y) / vp.Height) + 1.0f) / matProj(1, 1);
-
-		D3DXVECTOR3 vRayPosition(0, 0, 0);
-		D3DXVECTOR3 vRayDirection(px, py, 1.0f);
-
-		D3DXMATRIXA16 matView, matViewInverse;
-		g_pD3DDevice->GetTransform(D3DTS_VIEW, &matView);
-		D3DXMatrixInverse(&matViewInverse, 0, &matView);
-
-		D3DXVec3TransformCoord(&vRayPosition, &vRayPosition, &matViewInverse);
-		D3DXVec3TransformNormal(&vRayDirection, &vRayDirection, &matViewInverse);
-		D3DXVec3Normalize(&vRayDirection, &vRayDirection);
-
-		for (size_t i = 0; i < m_vecFloorVertex.size(); i += 3)
-		{
-			float u, v, f;
-			D3DXVECTOR3 p0 = m_vecFloorVertex[i + 0].p;
-			D3DXVECTOR3 p1 = m_vecFloorVertex[i + 1].p;
-			D3DXVECTOR3 p2 = m_vecFloorVertex[i + 2].p;
-
-			if (D3DXIntersectTri(&p0, &p1, &p2, &vRayPosition, &vRayDirection, &u, &v, &f))
-			{
-				D3DXVECTOR3 vPoint = p0 + u*(p1 - p0) + v*(p2 - p0);
-				if (m_bSelectWoman) m_pWoman->SetDestination(D3DXVECTOR3(vPoint.x, 0, vPoint.z));
-				else m_vDestinationSphere = D3DXVECTOR3(vPoint.x, 0.5f, vPoint.z);
-				break;
+				D3DXVECTOR3 v(0, 0, 0);
+				if (ray.IntersectTri(m_vecPlaneVertex[i + 0].p, m_vecPlaneVertex[i + 1].p, m_vecPlaneVertex[i + 2].p, v))
+				{
+					m_vPickedPosition = v;
+					m_pWoman->SetDestination(m_vPickedPosition);
+				}
 			}
 		}
 	}
-
-	//move the sphere
-	D3DXVECTOR3 dis = m_vDestinationSphere - m_vPositionSphere;
-	if (D3DXVec3Length(&dis) >= 0.1f)
-	{
-		D3DXVECTOR3 dir;
-		D3DXVec3Normalize(&dir, &dis);
-		m_vPositionSphere += dir * 0.05f;
-	}
-	else m_vPositionSphere = m_vDestinationSphere;
 }
 
 void cMainGame::Render()
@@ -292,28 +160,17 @@ void cMainGame::Render()
 	//if (m_pGrid) m_pGrid->Render();
 	if (m_pPyramid) m_pPyramid->Render();
 
-	//floor render
-	{
-		D3DXMATRIXA16 matFloorWorld;
-		D3DXMatrixIdentity(&matFloorWorld);
-		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matFloorWorld);
-		g_pD3DDevice->SetTexture(0, m_pTexture);
-		g_pD3DDevice->SetFVF(ST_PNT_VERTEX::FVF);
-		g_pD3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, m_vecFloorVertex.size() / 3, &m_vecFloorVertex[0], sizeof(ST_PNT_VERTEX));
-	}
+	//Obj_Render();
+	//Text_Render();
+	//Mesh_Render();
 
 	//if (m_pCubeMan) m_pCubeMan->Render();
 	//if (m_pRootFrame) m_pRootFrame->Render();
-
-	m_dwTime1 = GetTickCount();
 	if (m_pWoman) m_pWoman->Render();
-	m_dwTime2 = GetTickCount();
-	m_dwTime3 = GetTickCount();
 
-	Text_Render();
+	PickingObj_Render();
 
-	//Obj_Render();
-	Mesh_Render();
+	Render_heightMap();
 
 	//texture test render
 	{
@@ -333,6 +190,34 @@ void cMainGame::Render()
 void cMainGame::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	if (m_pCamera) m_pCamera->WndProc(hWnd, message, wParam, lParam);
+
+	//ray picking
+
+	//switch (message)
+	//{
+	//case WM_LBUTTONDOWN:
+	//{
+	//	cRay r = cRay::RayAtWorldSpace(LOWORD(lParam), HIWORD(lParam));
+	//	for (int i = 0; i < m_vecSphere.size(); i++)
+	//	{
+	//		m_vecSphere[i].isPicked = r.IsPicked(&m_vecSphere[i]);
+	//	}
+	//}
+	//	break;
+	//case WM_RBUTTONDOWN:
+	//{
+	//	cRay r = cRay::RayAtWorldSpace(LOWORD(lParam), HIWORD(lParam));
+	//	for (int i = 0; i < m_vecPlaneVertex.size(); i += 3)
+	//	{
+	//		D3DXVECTOR3 v(0, 0, 0);
+	//		if (r.IntersectTri(m_vecPlaneVertex[i + 0].p, m_vecPlaneVertex[i + 1].p, m_vecPlaneVertex[i + 2].p, v))
+	//		{
+	//			m_vPickedPosition = v;
+	//		}
+	//	}
+	//}
+	//	break;
+	//}
 }
 
 //light
@@ -534,6 +419,7 @@ void cMainGame::Text_Render()
 	}
 }
 
+
 //mesh
 void cMainGame::Setup_MeshObject()
 {
@@ -559,17 +445,17 @@ void cMainGame::Mesh_Render()
 
 	//teapot render
 	{
-		//D3DXMatrixIdentity(&matWorld);
-		//D3DXMatrixIdentity(&matS);
-		//D3DXMatrixIdentity(&matR);
+		D3DXMatrixIdentity(&matWorld);
+		D3DXMatrixIdentity(&matS);
+		D3DXMatrixIdentity(&matR);
 
-		//D3DXMatrixScaling(&matS, 1.0f, 1.0f, 1.0f);
-		//matWorld = matS * matR;
-		//D3DXMatrixTranslation(&matWorld, 0, 0, 4);
+		D3DXMatrixScaling(&matS, 1.0f, 1.0f, 1.0f);
+		matWorld = matS * matR;
+		D3DXMatrixTranslation(&matWorld, 0, 0, 4);
 
-		//g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
-		//g_pD3DDevice->SetMaterial(&m_stMtlTeapot);
-		//m_pMeshTeapot->DrawSubset(0);
+		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+		g_pD3DDevice->SetMaterial(&m_stMtlTeapot);
+		m_pMeshTeapot->DrawSubset(0);
 	}
 
 	//sphere render
@@ -582,7 +468,6 @@ void cMainGame::Mesh_Render()
 		D3DXMatrixIdentity(&matT);
 
 		D3DXMatrixScaling(&matS, 1.0f, 1.0f, 1.0f);
-		D3DXMatrixTranslation(&matT, m_vPositionSphere.x, m_vPositionSphere.y, m_vPositionSphere.z);
 		matWorld = matS * matR * matT;
 
 		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
@@ -594,23 +479,221 @@ void cMainGame::Mesh_Render()
 
 	//map render
 	{
-		//D3DXMatrixIdentity(&matWorld);
-		//D3DXMatrixIdentity(&matS);
-		//D3DXMatrixIdentity(&matR);
-		//D3DXMatrixIdentity(&matT);
+		D3DXMatrixIdentity(&matWorld);
+		D3DXMatrixIdentity(&matS);
+		D3DXMatrixIdentity(&matR);
+		D3DXMatrixIdentity(&matT);
 
-		//D3DXMatrixScaling(&matS, 0.01f, 0.01f, 0.01f);
-		//D3DXMatrixRotationX(&matR, -D3DX_PI * 0.5f);
-		////D3DXMatrixTranslation(&matT, 20, 0, 0);
-		//matWorld = matS * matR * matT;
-		//
-		//g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+		D3DXMatrixScaling(&matS, 0.01f, 0.01f, 0.01f);
+		D3DXMatrixRotationX(&matR, -D3DX_PI * 0.5f);
+		matWorld = matS * matR * matT;
+		
+		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
 
-		//for (int i = 0; i < m_vecMtlTexObjectMap.size(); ++i)
-		//{
-		//	g_pD3DDevice->SetTexture(0, m_vecMtlTexObjectMap[i]->GetTexture());
-		//	g_pD3DDevice->SetMaterial(&m_vecMtlTexObjectMap[i]->GetMaterial());
-		//	if(m_pMeshObjectMap) m_pMeshObjectMap->DrawSubset(i);
-		//}
+		for (int i = 0; i < m_vecMtlTexObjectMap.size(); ++i)
+		{
+			g_pD3DDevice->SetTexture(0, m_vecMtlTexObjectMap[i]->GetTexture());
+			g_pD3DDevice->SetMaterial(&m_vecMtlTexObjectMap[i]->GetMaterial());
+			if(m_pMeshObjectMap) m_pMeshObjectMap->DrawSubset(i);
+		}
 	}
+}
+
+
+//ray test
+void cMainGame::Setup_pickingObj()
+{
+	for (int i = 0; i <= 10; ++i)
+	{
+		ST_SPHERE s;
+		s.fRadius = 0.5f;
+		s.vCenter = D3DXVECTOR3(0, 0, -10 + 2 * i);
+		m_vecSphere.push_back(s);
+	}
+
+	ZeroMemory(&m_stMtlNone, sizeof(D3DMATERIAL9));
+	m_stMtlNone.Ambient = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
+	m_stMtlNone.Diffuse = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
+	m_stMtlNone.Specular = D3DXCOLOR(0.7f, 0.7f, 0.0f, 1.0f);
+
+	ZeroMemory(&m_stMtlPicked, sizeof(D3DMATERIAL9));
+	m_stMtlPicked.Ambient = D3DXCOLOR(0.7f, 0.0f, 0.0f, 1.0f);
+	m_stMtlPicked.Diffuse = D3DXCOLOR(0.7f, 0.0f, 0.0f, 1.0f);
+	m_stMtlPicked.Specular = D3DXCOLOR(0.7f, 0.0f, 0.0f, 1.0f);
+
+	ZeroMemory(&m_stMtlPlane, sizeof(D3DMATERIAL9));
+	m_stMtlPlane.Ambient = D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f);
+	m_stMtlPlane.Diffuse = D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f);
+	m_stMtlPlane.Specular = D3DXCOLOR(0.7f, 0.7f, 0.7f, 1.0f);
+
+	//plane setup
+	ST_PNT_VERTEX v;
+	v.n = D3DXVECTOR3(0, 1, 0);
+
+	v.p = D3DXVECTOR3(-10, 0, 10);
+	v.t = D3DXVECTOR2(0, 0);
+	m_vecPlaneVertex.push_back(v);
+	v.p = D3DXVECTOR3(10, 0, 10);
+	v.t = D3DXVECTOR2(1, 0);
+	m_vecPlaneVertex.push_back(v);
+	v.p = D3DXVECTOR3(10, 0, -10);
+	v.t = D3DXVECTOR2(1, 1);
+	m_vecPlaneVertex.push_back(v);
+
+	v.p = D3DXVECTOR3(-10, 0, 10);
+	v.t = D3DXVECTOR2(0, 0);
+	m_vecPlaneVertex.push_back(v);
+	v.p = D3DXVECTOR3(10, 0, -10);
+	v.t = D3DXVECTOR2(1, 1);
+	m_vecPlaneVertex.push_back(v);
+	v.p = D3DXVECTOR3(-10, 0, -10);
+	v.t = D3DXVECTOR2(0, 1);
+	m_vecPlaneVertex.push_back(v);
+}
+
+void cMainGame::PickingObj_Render()
+{
+	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
+
+	D3DXMATRIXA16 matWorld;
+	D3DXMATRIXA16 matPlaneWorld;
+	D3DXMatrixIdentity(&matPlaneWorld);
+	g_pD3DDevice->SetTransform(D3DTS_WORLD, &matPlaneWorld);
+	g_pD3DDevice->SetMaterial(&m_stMtlPlane);
+	g_pD3DDevice->SetTexture(0, m_pTexture);
+	g_pD3DDevice->SetFVF(ST_PNT_VERTEX::FVF);
+	g_pD3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, m_vecPlaneVertex.size() / 3, &m_vecPlaneVertex[0], sizeof(ST_PNT_VERTEX));
+
+	//for (int i = 0; i < m_vecSphere.size(); ++i)
+	//{
+	//	D3DXMatrixIdentity(&matWorld);
+	//	matWorld._41 = m_vecSphere[i].vCenter.x;
+	//	matWorld._42 = m_vecSphere[i].vCenter.y;
+	//	matWorld._43 = m_vecSphere[i].vCenter.z;
+	//	g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+	//	g_pD3DDevice->SetMaterial(m_vecSphere[i].isPicked ? &m_stMtlPicked : &m_stMtlNone);
+	//	m_pMeshSphere->DrawSubset(0);
+	//}
+
+	////picking position check
+	//g_pD3DDevice->SetMaterial(&m_stMtlNone);
+	//D3DXMatrixTranslation(&matWorld, m_vPickedPosition.x, m_vPickedPosition.y, m_vPickedPosition.z);
+	//g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+	//m_pMeshSphere->DrawSubset(0);
+}
+
+
+//height map
+void cMainGame::Setup_heightMap()
+{
+	D3DXCreateTextureFromFile(g_pD3DDevice, "objects/terrain.jpg", &m_pTextureHeightMap);
+
+	std::vector<unsigned int> vecRawHeight;
+
+	cRawLoader rawloader;
+	rawloader.Load(vecRawHeight, "objects/HeightMap.raw");
+	vecRawHeight.pop_back();
+
+	//create mesh
+	DWORD tileX = 256;
+	DWORD tileZ = 256;
+
+	D3DXCreateMeshFVF(tileX*tileZ*2, (tileX + 1)*(tileZ + 1), D3DXMESH_MANAGED | D3DXMESH_32BIT, ST_PNT_VERTEX::FVF, g_pD3DDevice, &m_pMeshHeightMap);
+	
+	std::vector<ST_PNT_VERTEX> vecVertexHeightMap;
+	ST_PNT_VERTEX* vertex = 0;
+	for (int axisZ = 0; axisZ < (tileZ + 1); ++axisZ)
+	{
+		for (int axisX = 0; axisX < (tileX + 1); ++axisX)
+		{
+			int vIndex = axisX + axisZ*(tileZ + 1);
+			ST_PNT_VERTEX v;
+			v.p = D3DXVECTOR3(axisX, vecRawHeight[vIndex] * 0.1f, axisZ);
+			v.n = D3DXVECTOR3(0, 1, 0);
+			v.t = D3DXVECTOR2(axisX / 257.0f, axisZ / 257.0f);
+
+			vecVertexHeightMap.push_back(v);
+		}
+	}
+	//calc normal
+	for (int axisZ = 1; axisZ < tileZ; ++axisZ)
+	{
+		for (int axisX = 1; axisX < tileX; ++axisX)
+		{
+			int vIndex = axisX + axisZ*(tileZ + 1);
+			D3DXVECTOR3 left2right = vecVertexHeightMap[vIndex + 1].p - vecVertexHeightMap[vIndex - 1].p;
+			D3DXVECTOR3 up2down = vecVertexHeightMap[vIndex + (tileZ + 1)].p - vecVertexHeightMap[vIndex - (tileX + 1)].p;
+			D3DXVec3Cross(&vecVertexHeightMap[vIndex].n, &left2right, &up2down);
+		}
+	}
+	//m_pMeshHeightMap->LockVertexBuffer(0, (void**)&vertex);
+	//memcpy(vertex, &vecVertexHeightMap[0], vecVertexHeightMap.size() * sizeof(ST_PNT_VERTEX));
+	//m_pMeshHeightMap->UnlockVertexBuffer();
+
+	std::vector<WORD> vecIndex;
+	WORD* index = 0;
+	unsigned int indexCount = 0;
+	for (int axisZ = 0; axisZ < tileZ; ++axisZ)
+	{
+		for (int axisX = 0; axisX < tileX; ++axisX)
+		{
+			int vIndex = axisX + axisZ*(tileZ + 1);
+			//index[indexCount++] = vIndex;
+			//index[indexCount++] = vIndex + 1 + (tileZ + 1);
+			//index[indexCount++] = vIndex + 1;
+			//index[indexCount++] = vIndex;
+			//index[indexCount++] = vIndex + (tileZ + 1);
+			//index[indexCount++] = vIndex + 1 + (tileZ + 1);
+
+			//vecIndex.push_back(vIndex);
+			//vecIndex.push_back(vIndex + 1 + (tileZ + 1));
+			//vecIndex.push_back(vIndex + 1);
+			//vecIndex.push_back(vIndex);
+			//vecIndex.push_back(vIndex + (tileZ + 1));
+			//vecIndex.push_back(vIndex + 1 + (tileZ + 1));
+
+			m_vecVertexHeightMap.push_back(vecVertexHeightMap[vIndex]);
+			m_vecVertexHeightMap.push_back(vecVertexHeightMap[vIndex+ 1 + tileZ + 1]);
+			m_vecVertexHeightMap.push_back(vecVertexHeightMap[vIndex+ 1]);
+			m_vecVertexHeightMap.push_back(vecVertexHeightMap[vIndex]);
+			m_vecVertexHeightMap.push_back(vecVertexHeightMap[vIndex + tileZ + 1]);
+			m_vecVertexHeightMap.push_back(vecVertexHeightMap[vIndex + 1 + tileZ + 1]);
+		}
+	}
+	//m_pMeshHeightMap->LockIndexBuffer(0, (void**)&index);
+	//memcpy(index, &vecIndex[0], vecIndex.size() * sizeof(WORD));
+	//m_pMeshHeightMap->UnlockIndexBuffer();
+
+	//DWORD* attributeBuffer = 0;
+	//m_pMeshHeightMap->LockAttributeBuffer(0, &attributeBuffer);
+	//for (unsigned int i = 0; i < tileX*tileZ*2; ++i)
+	//{
+	//	attributeBuffer[i] = 0;
+	//}
+	//m_pMeshHeightMap->UnlockAttributeBuffer();
+
+	//optimize
+	//std::vector<DWORD> vecAdjacencyBuffer(m_pMeshHeightMap->GetNumFaces() * 3);
+	//m_pMeshHeightMap->GenerateAdjacency(0.0f, &vecAdjacencyBuffer[0]);
+
+	//m_pMeshHeightMap->OptimizeInplace(
+	//	D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_COMPACT | D3DXMESHOPT_VERTEXCACHE,
+	//	&vecAdjacencyBuffer[0], 0, 0, 0);
+}
+
+void cMainGame::Render_heightMap()
+{
+	//g_pD3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
+	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
+
+	D3DXMATRIXA16 matWorld;
+	D3DXMatrixIdentity(&matWorld);
+	g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+	g_pD3DDevice->SetTexture(0, m_pTextureHeightMap);
+	g_pD3DDevice->SetFVF(ST_PNT_VERTEX::FVF);
+
+	g_pD3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLELIST, m_vecVertexHeightMap.size() / 3, &m_vecVertexHeightMap[0], sizeof(ST_PNT_VERTEX));
+	//m_pMeshHeightMap->DrawSubset(0);
+
+	//g_pD3DDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
 }
