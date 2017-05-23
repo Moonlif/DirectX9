@@ -140,6 +140,14 @@ struct ST_SPHERE
 	ST_SPHERE() : fRadius(0.0f), vCenter(0, 0, 0), isPicked(false) {}
 };
 
+struct ST_SIZEN
+{
+	int nWidth;
+	int nHeight;
+	ST_SIZEN() : nWidth(0), nHeight(0) {}
+	ST_SIZEN(int _w, int _h) : nWidth(_w), nHeight(_h) {}
+};
+
 #include "cObject.h"
 #include "iMap.h"
 //singletone

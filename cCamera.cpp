@@ -74,8 +74,6 @@ void cCamera::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_RBUTTONUP:
 		break;
 	case WM_MOUSEMOVE:
-		g_ptMouse.x = LOWORD(lParam);
-		g_ptMouse.y = HIWORD(lParam);
 		if (m_isLButtonDown)
 		{
 			float fDeltaX = (float)g_ptMouse.x - m_ptPrevMouse.x;

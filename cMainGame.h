@@ -5,6 +5,7 @@ class cCamera;
 class cGrid;
 class cPyramid;
 class iMap;
+class cHeightMap;
 
 class cCubePC;
 class cCharacter;
@@ -15,6 +16,8 @@ class cFrame;
 class cWoman;
 
 class cMtlTex;
+
+class cUI;
 
 class cMainGame
 {
@@ -55,6 +58,12 @@ private:
 	LPD3DXFONT		m_pFont;
 	ID3DXMesh*		m_p3DText;
 
+	//ui
+	LPD3DXSPRITE			m_pSprite;
+	D3DXIMAGE_INFO			m_stImageInfo;
+	LPDIRECT3DTEXTURE9		m_pTexture;
+	cUI*		m_pUI;
+
 public:
 	void Setup();
 	void Update();
@@ -82,5 +91,9 @@ public:
 	//font
 	void Create_Font();
 	void Text_Render();
+
+	//ui
+	void Setup_UI();
+	void UI_Render();
 };
 

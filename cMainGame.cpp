@@ -21,6 +21,8 @@
 
 #include "cRay.h"
 
+#include "cUI.h"
+
 cMainGame::cMainGame()
 	: m_pCamera(NULL)
 
@@ -39,6 +41,10 @@ cMainGame::cMainGame()
 
 	, m_pFont(NULL)
 	, m_p3DText(NULL)
+
+	, m_pSprite(NULL)
+	, m_pTexture(NULL)
+	, m_pUI(NULL)
 {	 
 }
 
@@ -70,6 +76,11 @@ cMainGame::~cMainGame()
 	SAFE_RELEASE(m_pFont);
 	SAFE_RELEASE(m_p3DText);
 
+	//ui
+	SAFE_RELEASE(m_pSprite);
+	SAFE_RELEASE(m_pTexture);
+	SAFE_DELETE(m_pUI);
+
 	g_pTextureManager->Destroy();
 	g_pDeviceManager->Destroy();
 }
@@ -90,7 +101,7 @@ void cMainGame::Setup()
 	//cObjLoader loadObj;
 	//loadObj.Load(m_vecGroupMap, "objects", "Map.obj");	//object map for render
 	//Load_Surface();	//object m_pMap for collision
-	Setup_HeightMap(); //heightMap for collision & render
+	//Setup_HeightMap(); //heightMap for collision & render
 	Setup_Plane();	//map for ray
 
 	//character
@@ -111,6 +122,11 @@ void cMainGame::Setup()
 	//font
 	//Create_Font();
 
+	//ui
+	Setup_UI();
+	m_pUI = new cUI;
+	m_pUI->Setup();
+
 	m_pCamera->ReTarget(&m_pWoman->GetPosition());
 }
 
@@ -121,6 +137,8 @@ void cMainGame::Update()
 	if (m_pCubeMan) m_pCubeMan->Update(m_pMap);
 	if (m_pRootFrame) m_pRootFrame->Update(m_pRootFrame->GetKeyFrame(), NULL);
 	if (m_pWoman) m_pWoman->Update(m_pMap, m_vecVertexPlane);
+
+	if (m_pUI->m_isHidden == false) m_pUI->Update();
 }
 
 void cMainGame::Render()
@@ -147,20 +165,27 @@ void cMainGame::Render()
 	//text
 	//Text_Render();
 
+	//ui
+	UI_Render();
+	if (m_pUI->m_isHidden == false) m_pUI->Render();
+
 	g_pD3DDevice->EndScene();
 	g_pD3DDevice->Present(NULL, NULL, NULL, NULL);
 }
 
 void cMainGame::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	if (m_pCamera) m_pCamera->WndProc(hWnd, message, wParam, lParam);
-
+	if (m_pUI->m_isMouseOnUI == false || m_pUI->m_isHidden == true)
+	{
+		if (m_pCamera) m_pCamera->WndProc(hWnd, message, wParam, lParam);
+	}
 	//ray picking
 	switch (message)
 	{
 	case WM_LBUTTONDOWN:
 		break;
 	case WM_RBUTTONDOWN:
+		m_pUI->m_isHidden = false;
 	{
 		//cRay r = cRay::RayAtWorldSpace(LOWORD(lParam), HIWORD(lParam));
 		//for (int i = 0; i < m_vecVertexPlane.size(); i += 3)
@@ -173,6 +198,10 @@ void cMainGame::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		//}
 	}
 	break;
+	case WM_MOUSEMOVE:
+		g_ptMouse.x = LOWORD(lParam);
+		g_ptMouse.y = HIWORD(lParam);
+		break;
 	}
 }
 
@@ -511,4 +540,62 @@ void cMainGame::Text_Render()
 		g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
 		m_p3DText->DrawSubset(0);
 	}
+}
+
+
+//ui
+void cMainGame::Setup_UI()
+{
+	D3DXCreateSprite(g_pD3DDevice, &m_pSprite);
+
+	//±âÁ¸ texture¸¦ ¸¸µå´Â ¹æ½Ä
+	{
+		//m_pTexture = g_pTextureManager->GetTexture("UI/±èÅÂÈñ.jpg");
+	}
+
+	{
+		D3DXCreateTextureFromFileEx(
+			g_pD3DDevice,
+			"UI/±èÅÂÈñ.jpg",
+			D3DX_DEFAULT_NONPOW2,
+			D3DX_DEFAULT_NONPOW2,
+			D3DX_DEFAULT,
+			0,
+			D3DFMT_UNKNOWN,
+			D3DPOOL_MANAGED,
+			D3DX_FILTER_NONE,
+			D3DX_DEFAULT,
+			0,
+			&m_stImageInfo,
+			NULL,
+			&m_pTexture);
+	}
+}
+
+void cMainGame::UI_Render()
+{
+	m_pSprite->Begin(D3DXSPRITE_ALPHABLEND | D3DXSPRITE_SORT_TEXTURE);
+
+	D3DXMATRIXA16 matS, matR, matT, mat;
+	D3DXMatrixIdentity(&matS);
+	D3DXMatrixIdentity(&matR);
+	D3DXMatrixIdentity(&matT);
+	D3DXMatrixIdentity(&mat);
+	
+	{
+		static float fAngle = 0.0f;
+		fAngle += 0.01f;
+		D3DXMatrixRotationZ(&matR, fAngle);
+		D3DXMatrixTranslation(&matT, 200, 200, 0);
+	}
+	mat = matS * matR * matT;
+
+	m_pSprite->SetTransform(&mat);
+
+	RECT rc;
+	SetRect(&rc, 0, 0, m_stImageInfo.Width, m_stImageInfo.Height);
+	
+	//m_pSprite->Draw(m_pTexture, &rc, &D3DXVECTOR3(m_stImageInfo.Width /2, m_stImageInfo.Height/2, 0), &D3DXVECTOR3(0, 0, 0), D3DCOLOR_ARGB(120, 255, 255, 255));
+
+	m_pSprite->End();
 }
