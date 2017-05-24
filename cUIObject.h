@@ -1,6 +1,6 @@
 #pragma once
 #include "cObject.h"
-class cUI;
+
 class cUIObject : public cObject
 {
 public:
@@ -16,17 +16,16 @@ protected:
 
 	bool m_isHidden;
 
-	SYNTHESIZE(cUI*, m_pUI, UI);
-	SYNTHESIZE(int, m_nButtonId, ButtonId);
+	//tag
+	SYNTHESIZE(int, m_nTag, Tag);
 
 public:
-	virtual void SetPosition(float x, float y, float z = 0);
 	virtual void AddChild(cUIObject* pChild);
 	virtual void Update();
 	virtual void Render(LPD3DXSPRITE pSprite);
 	virtual void Destroy();
 
 	//tag
-
+	virtual cUIObject* FindChildByTag(int nTag);
 };
 

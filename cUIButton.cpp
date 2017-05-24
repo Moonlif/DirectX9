@@ -4,84 +4,83 @@
 
 cUIButton::cUIButton()
 	: m_eButtonState(E_NORMAL)
+	, m_pDelegate(NULL)
 {
-	for (int i = 0; i < E_STATE_CNT; ++i)
-	{
-		m_aTexture[i] = NULL;
-	}
 }
 
 
 cUIButton::~cUIButton()
 {
-	for (int i = 0; i < E_STATE_CNT; ++i)
-	{
-		SAFE_RELEASE(m_aTexture[i]);
-	}
 }
 
-void cUIButton::SetTexture(char * szNor, char * szOver, char * szSel)
+void cUIButton::SetTexture(char* szNormal, char* szMouseOver, char* szSelected)
 {
-	D3DXCreateTextureFromFileEx(g_pD3DDevice, szNor, D3DX_DEFAULT_NONPOW2, D3DX_DEFAULT_NONPOW2, D3DX_DEFAULT, 
-		0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_FILTER_NONE, D3DX_DEFAULT, 0, &m_stImageInfo[0], NULL, &m_aTexture[0]);
+	D3DXIMAGE_INFO stImageInfo;
 
-	D3DXCreateTextureFromFileEx(g_pD3DDevice, szOver, D3DX_DEFAULT_NONPOW2, D3DX_DEFAULT_NONPOW2, D3DX_DEFAULT,
-		0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_FILTER_NONE, D3DX_DEFAULT, 0, &m_stImageInfo[1], NULL, &m_aTexture[1]);
+	m_aTexture[E_NORMAL] = g_pTextureManager->GetTexture(szNormal, &stImageInfo);
+	
+	m_stSize.nWidth = stImageInfo.Width;
+	m_stSize.nHeight = stImageInfo.Height;
 
-	D3DXCreateTextureFromFileEx(g_pD3DDevice, szSel, D3DX_DEFAULT_NONPOW2, D3DX_DEFAULT_NONPOW2, D3DX_DEFAULT,
-		0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED, D3DX_FILTER_NONE, D3DX_DEFAULT, 0, &m_stImageInfo[2], NULL, &m_aTexture[2]);
+	m_aTexture[E_MOUSEOVER] = g_pTextureManager->GetTexture(szMouseOver, &stImageInfo);
+	
+	assert(m_stSize.nWidth == stImageInfo.Width && m_stSize.nHeight == stImageInfo.Height);
+
+	m_aTexture[E_SELECTED] = g_pTextureManager->GetTexture(szSelected, &stImageInfo);
+
+	assert(m_stSize.nWidth == stImageInfo.Width && m_stSize.nHeight == stImageInfo.Height);
 }
 
 void cUIButton::Update()
 {
-	cUIObject::Update();
+	if (m_isHidden) return;
 
-	D3DXVECTOR3 vPosition(0, 0, 0);
-	if (GetParent() != NULL)
+	POINT pt;
+	GetCursorPos(&pt);
+	ScreenToClient(g_hWnd, &pt);
+
+	RECT rc;
+	SetRect(&rc, (int)m_matWorld._41, (int)m_matWorld._42, (int)m_matWorld._41 + (int)m_stSize.nWidth, (int)m_matWorld._42 + (int)m_stSize.nHeight);
+
+	if (PtInRect(&rc, pt))
 	{
-		vPosition = GetParent()->GetPosition();
-	}
-	vPosition = GetPosition() + vPosition;
-
-	RECT collisionRc;
-	SetRect(&collisionRc, vPosition.x, vPosition.y, vPosition.x + m_stImageInfo[m_eButtonState].Width, vPosition.y + m_stImageInfo[m_eButtonState].Height);
-
-	//click
-	if (PtInRect(&collisionRc, g_ptMouse))
-	{
-		m_eButtonState = E_MOUSEOVER;
+		if (GetKeyState(VK_LBUTTON) & 0x8000)
+		{
+			if (m_eButtonState == E_MOUSEOVER)
+			{
+				m_eButtonState = E_SELECTED;
+			}
+		}
+		else
+		{
+			if (m_eButtonState == E_SELECTED)
+			{
+				if (m_pDelegate)
+					m_pDelegate->OnClick(this);
+			}
+			m_eButtonState = E_MOUSEOVER;
+		}
 	}
 	else
 	{
 		m_eButtonState = E_NORMAL;
 	}
-	if (GetKeyState(VK_LBUTTON) & 0x8000)
-	{
-		if (m_eButtonState == E_MOUSEOVER)
-		{
-			m_eButtonState = E_SELECTED;
-			//ButtonAction();
-			if (GetButtonId() == 0) GetUI()->CloseUI();
-			else if (GetButtonId() == 1) GetUI()->SetText1();
-			else if (GetButtonId() == 2) GetUI()->SetText2();
-		}
-		else
-		{
-			m_eButtonState = E_NORMAL;
-		}
-	}
+
+	cUIObject::Update();
 }
 
 void cUIButton::Render(LPD3DXSPRITE pSprite)
 {
-	pSprite->Begin(D3DXSPRITE_ALPHABLEND | D3DXSPRITE_SORT_TEXTURE);
+	if (m_isHidden) return;
 
+	pSprite->Begin(D3DXSPRITE_ALPHABLEND | D3DXSPRITE_SORT_TEXTURE);
 	pSprite->SetTransform(&m_matWorld);
 
 	RECT rc;
-	SetRect(&rc, 0, 0, m_stImageInfo[m_eButtonState].Width, m_stImageInfo[m_eButtonState].Height);
+	SetRect(&rc, 0, 0, m_stSize.nWidth, m_stSize.nHeight);
 
 	pSprite->Draw(m_aTexture[m_eButtonState], &rc, &D3DXVECTOR3(0, 0, 0), &D3DXVECTOR3(0, 0, 0), D3DCOLOR_ARGB(255, 255, 255, 255));
-
 	pSprite->End();
+
+	cUIObject::Render(pSprite);
 }

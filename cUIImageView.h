@@ -8,7 +8,6 @@ public:
 
 protected:
 	LPDIRECT3DTEXTURE9	m_pTexture;
-	D3DXIMAGE_INFO		m_stImageInfo;
 
 public:
 	virtual void SetTexture(char* szFullPath);

@@ -32,7 +32,8 @@ private:
 	cGrid*			m_pGrid;
 	cPyramid*		m_pPyramid;
 	vector<cGroup*> m_vecGroupMap;	//object map
-	iMap*			m_pMap;
+	iMap*			m_pMap;			//iMap*형으로 선언하면 릴리즈되지 않음. cHeightMap*형으로 하면 릴리즈 가능
+									//다른방법으로 릴리즈 시킬 수 있는듯 한데 방법을 모르겠음
 
 	//character
 	cCubePC*		m_pCubePC;

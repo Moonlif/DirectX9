@@ -81,6 +81,7 @@ cMainGame::~cMainGame()
 	SAFE_RELEASE(m_pTexture);
 	SAFE_DELETE(m_pUI);
 
+	g_pFontManager->Destroy();
 	g_pTextureManager->Destroy();
 	g_pDeviceManager->Destroy();
 }
@@ -138,7 +139,7 @@ void cMainGame::Update()
 	if (m_pRootFrame) m_pRootFrame->Update(m_pRootFrame->GetKeyFrame(), NULL);
 	if (m_pWoman) m_pWoman->Update(m_pMap, m_vecVertexPlane);
 
-	if (m_pUI->m_isHidden == false) m_pUI->Update();
+	if (m_pUI) m_pUI->Update();
 }
 
 void cMainGame::Render()
@@ -167,7 +168,7 @@ void cMainGame::Render()
 
 	//ui
 	UI_Render();
-	if (m_pUI->m_isHidden == false) m_pUI->Render();
+	if (m_pUI) m_pUI->Render();
 
 	g_pD3DDevice->EndScene();
 	g_pD3DDevice->Present(NULL, NULL, NULL, NULL);
@@ -175,17 +176,14 @@ void cMainGame::Render()
 
 void cMainGame::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	if (m_pUI->m_isMouseOnUI == false || m_pUI->m_isHidden == true)
-	{
-		if (m_pCamera) m_pCamera->WndProc(hWnd, message, wParam, lParam);
-	}
+	if (m_pCamera) m_pCamera->WndProc(hWnd, message, wParam, lParam);
+
 	//ray picking
 	switch (message)
 	{
 	case WM_LBUTTONDOWN:
 		break;
 	case WM_RBUTTONDOWN:
-		m_pUI->m_isHidden = false;
 	{
 		//cRay r = cRay::RayAtWorldSpace(LOWORD(lParam), HIWORD(lParam));
 		//for (int i = 0; i < m_vecVertexPlane.size(); i += 3)

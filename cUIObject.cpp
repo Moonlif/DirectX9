@@ -3,58 +3,71 @@
 
 
 cUIObject::cUIObject()
-	: m_pParent(NULL)
+	: m_vPosition(0, 0, 0)
+	, m_pParent(NULL)
+	, m_stSize(0, 0)
 	, m_isHidden(false)
+	, m_nTag(0)
 {
-	m_pUI = NULL;
+	D3DXMatrixIdentity(&m_matWorld);
 }
 
 
 cUIObject::~cUIObject()
 {
-	Destroy();
-}
-
-void cUIObject::SetPosition(float x, float y, float z)
-{
-	m_vPosition = D3DXVECTOR3(x, y, z);
+	//Destroy();
 }
 
 void cUIObject::AddChild(cUIObject * pChild)
 {
+	pChild->SetParent(this);
 	m_vecChild.push_back(pChild);
 }
 
 void cUIObject::Update()
 {
-	D3DXVECTOR3 vPosition(0, 0, 0);
+	if (m_isHidden) return;
+
+	D3DXMatrixIdentity(&m_matWorld);
+	m_matWorld._41 = m_vPosition.x;
+	m_matWorld._42 = m_vPosition.y;
+	m_matWorld._43 = m_vPosition.z;
+
 	if (m_pParent)
 	{
-		vPosition = m_pParent->GetPosition();
+		m_matWorld._41 += m_pParent->m_matWorld._41;
+		m_matWorld._42 += m_pParent->m_matWorld._42;
+		m_matWorld._43 += m_pParent->m_matWorld._43;
 	}
-	vPosition = m_vPosition + vPosition;
-
-	D3DXMATRIXA16 matT;
-	D3DXMatrixTranslation(&matT, vPosition.x, vPosition.y, vPosition.z);
-
-	m_matWorld = matT;
 
 	for each (auto c in m_vecChild)
-	{
 		c->Update();
-	}
 }
 
 void cUIObject::Render(LPD3DXSPRITE pSprite)
 {
+	if (m_isHidden) return;
+
 	for each (auto c in m_vecChild)
 		c->Render(pSprite);
 }
 
 void cUIObject::Destroy()
 {
+	m_isHidden = true;
 	for each (auto c in m_vecChild)
 		c->Destroy();
 
 	this->Release();
+}
+
+cUIObject * cUIObject::FindChildByTag(int nTag)
+{
+	if (m_nTag == nTag) return this;
+	for each (auto c in m_vecChild)
+	{
+		cUIObject* p = c->FindChildByTag(nTag);
+		if (p) return p;
+	}
+	return NULL;
 }

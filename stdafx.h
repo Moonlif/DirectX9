@@ -57,17 +57,17 @@ extern int g_nCountFps;
 				}
 
 #define SYNTHESIZE(varType, varName, funName)\
-private: varType varName;\
+protected: varType varName;\
 public: inline varType Get##funName(void) const { return varName; }\
 public: inline void Set##funName(varType var) { varName = var; }
 
 #define SYNTHESIZE_PASS_BY_REF(varType, varName, funName)\
-private: varType varName;\
+protected: varType varName;\
 public: inline varType& Get##funName(void) { return varName; }\
 public: inline void Set##funName(varType& var) { varName = var; }
 
 #define SYNTHESIZE_ADD_REF(varType, varName, funName)\
-private: varType varName;\
+protected: varType varName;\
 public: virtual varType Get##funName(void) const { return varName; }\
 public: virtual void Set##funName(varType var) {\
 		if (varName != var) {\
@@ -154,3 +154,4 @@ struct ST_SIZEN
 #include "cDeviceManager.h"
 #include "cTextureManager.h"
 #include "cObjectManager.h"
+#include "cFontManager.h"
