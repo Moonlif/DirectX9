@@ -1,4 +1,6 @@
 #pragma once
+#define ASTAR_X 16
+#define ASTAR_Z 16
 
 class cCamera;
 
@@ -65,6 +67,20 @@ private:
 	LPDIRECT3DTEXTURE9		m_pTexture;
 	cUI*		m_pUI;
 
+	//AStar
+	std::vector<ST_PC_VERTEX>	m_vecVertexPlaneAstar;
+	std::vector<D3DXVECTOR3> m_vecAstarRoute;
+	ST_ASTAR m_aAstarTileOrigin[ASTAR_X][ASTAR_Z];
+	ST_ASTAR m_aAstarTile[ASTAR_X][ASTAR_Z];
+	POINT m_ptAstarStart;
+	POINT m_ptAstarDest;
+	std::vector<POINT> m_vecAstarOpenList;
+
+	//xFile
+	ID3DXMesh*						m_pMeshXFile;
+	std::vector<D3DMATERIAL9>		m_vecMtlXFile;
+	std::vector<IDirect3DTexture9*> m_vecTexXFile;
+
 public:
 	void Setup();
 	void Update();
@@ -96,5 +112,15 @@ public:
 	//ui
 	void Setup_UI();
 	void UI_Render();
+
+	//aStar
+	void Setup_Astar();
+	void Astar_Render();
+	void Calculate_Astar();
+	void Check_Astar(int targetX, int targetZ, int destX, int destZ);
+
+	//xFile load
+	void Setup_xFile();
+	void xFile_Render();
 };
 

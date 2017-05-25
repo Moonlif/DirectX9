@@ -14,48 +14,22 @@ cGrid::~cGrid()
 	SAFE_RELEASE(m_pVertexBuffer);
 }
 
-void cGrid::Setup(int xAxisCount, int zAxisCount, float interval)
+void cGrid::Setup(int xAxisStart, int zAxisStart, int xAxisCount, int zAxisCount, float interval)
 {
 	ST_PC_VERTEX v;
-	v.c = D3DCOLOR_XRGB(255, 255, 255);
+	v.c = D3DCOLOR_XRGB(0, 0, 0);
 
-	//6 corner
-	//v.p = D3DXVECTOR3(5, 0, 0);	m_vecVertex.push_back(v);
-	//v.p = D3DXVECTOR3(2.5f, 0, 2.5*1.7f); m_vecVertex.push_back(v);
-
-	//v.p = D3DXVECTOR3(2.5f, 0, 2.5*1.7f); m_vecVertex.push_back(v);
-	//v.p = D3DXVECTOR3(-2.5f, 0, 2.5*1.7f); m_vecVertex.push_back(v);
-
-	//v.p = D3DXVECTOR3(-2.5f, 0, 2.5*1.7f); m_vecVertex.push_back(v);
-	//v.p = D3DXVECTOR3(-5, 0, 0); m_vecVertex.push_back(v);
-
-	//v.p = D3DXVECTOR3(-5, 0, 0); m_vecVertex.push_back(v);
-	//v.p = D3DXVECTOR3(-2.5f, 0, -2.5*1.7f); m_vecVertex.push_back(v);
-
-	//v.p = D3DXVECTOR3(-2.5f, 0, -2.5*1.7f); m_vecVertex.push_back(v);
-	//v.p = D3DXVECTOR3(2.5f, 0, -2.5*1.7f); m_vecVertex.push_back(v);
-
-	//v.p = D3DXVECTOR3(2.5f, 0, -2.5*1.7f); m_vecVertex.push_back(v);
-	//v.p = D3DXVECTOR3(5, 0, 0);	m_vecVertex.push_back(v);
-
-
-	//x축
-	for (int i = 1; i <= xAxisCount / 2; ++i)
+	//x축 방향
+	for (int i = 0; i < xAxisCount; ++i)
 	{
-		v.p = D3DXVECTOR3((zAxisCount / 2) * interval, 0, i * interval); m_vecVertex.push_back(v);
-		v.p = D3DXVECTOR3(-(zAxisCount / 2) * interval, 0, i * interval); m_vecVertex.push_back(v);
-
-		v.p = D3DXVECTOR3((zAxisCount / 2) * interval, 0, -i * interval); m_vecVertex.push_back(v);
-		v.p = D3DXVECTOR3(-(zAxisCount / 2) * interval, 0, -i * interval); m_vecVertex.push_back(v);
+		v.p = D3DXVECTOR3(xAxisStart, 0.01f, zAxisStart + i);  m_vecVertex.push_back(v);
+		v.p = D3DXVECTOR3(xAxisStart + xAxisCount * interval, 0.01f, zAxisStart + i); m_vecVertex.push_back(v);
 	}
-	//z축
-	for (int i = 1; i <= xAxisCount / 2; ++i)
+	//z축 방향
+	for (int i = 0; i < xAxisCount; ++i)
 	{
-		v.p = D3DXVECTOR3(i * interval, 0, (xAxisCount / 2) * interval); m_vecVertex.push_back(v);
-		v.p = D3DXVECTOR3(i * interval, 0, -(xAxisCount / 2) * interval); m_vecVertex.push_back(v);
-
-		v.p = D3DXVECTOR3(-i * interval, 0, (xAxisCount / 2) * interval); m_vecVertex.push_back(v);
-		v.p = D3DXVECTOR3(-i * interval, 0, -(xAxisCount / 2) * interval); m_vecVertex.push_back(v);
+		v.p = D3DXVECTOR3(xAxisStart + i, 0.01f, zAxisStart);  m_vecVertex.push_back(v);
+		v.p = D3DXVECTOR3(xAxisStart + i, 0.01f, zAxisStart + zAxisCount * interval); m_vecVertex.push_back(v);
 	}
 
 	//x축

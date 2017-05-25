@@ -148,6 +148,17 @@ struct ST_SIZEN
 	ST_SIZEN(int _w, int _h) : nWidth(_w), nHeight(_h) {}
 };
 
+struct ST_ASTAR
+{
+	enum eState {E_NONE, E_BLOCK, E_START, E_DESTINATION, E_OPEN, E_CLOSE, E_ROUTE};
+	
+	eState state;
+	float f;
+	float g;
+	float h;
+	POINT parent;
+};
+
 #include "cObject.h"
 #include "iMap.h"
 //singletone

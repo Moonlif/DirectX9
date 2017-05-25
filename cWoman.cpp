@@ -46,9 +46,10 @@ void cWoman::Update(iMap * pMap, std::vector<ST_PNT_VERTEX>& vecVertexPlane)
 	//D3DXVECTOR3 vDistance = m_vDestination - m_vPosition;
 	//if (D3DXVec3Length(&vDistance) < 0.1f) m_IsDestination = false;
 
-	//
-	if (m_IsDestination == true)
+	
+	if (m_vecRoute.size() > 0)//(m_IsDestination == true)
 	{
+		m_vDestination = m_vecRoute.back();
 		m_IsMoving = true;
 
 		m_vDirection = m_vDestination - m_vPosition;
@@ -61,8 +62,12 @@ void cWoman::Update(iMap * pMap, std::vector<ST_PNT_VERTEX>& vecVertexPlane)
 		//check arrive
 		D3DXVECTOR3 vDistance;
 		vDistance = m_vDestination - m_vPosition;
-		if (D3DXVec3Length(&vDistance) < 0.1f) m_IsDestination = false;
-		
+		if (D3DXVec3Length(&vDistance) < 0.1f)
+		{
+			//m_IsDestination = false;
+			m_vecRoute.pop_back();
+		}
+
 		//rotation
 		D3DXVECTOR3 zAxis(0, 0, 1);
 		m_vRotation.y = acosf(D3DXVec3Dot(&m_vDirection, &zAxis));
@@ -108,4 +113,9 @@ void cWoman::Render()
 	{
 		if(m_pRootStand) m_pRootStand->Render();
 	}
+}
+
+void cWoman::SetRoute(std::vector<D3DXVECTOR3> vecRoute)
+{
+	m_vecRoute = vecRoute;
 }

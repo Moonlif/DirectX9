@@ -11,7 +11,7 @@ private:
 	LPDIRECT3DVERTEXBUFFER9	m_pVertexBuffer;
 
 public:
-	void Setup(int xAxisCount, int zAxisCount, float interval);
+	void Setup(int xAxisStart, int zAxisStart, int xAxisCount, int zAxisCount, float interval);
 	void Render();
 
 };
