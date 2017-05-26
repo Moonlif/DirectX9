@@ -208,6 +208,7 @@ void cMainGame::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 	case WM_LBUTTONDOWN:
+		if (m_pSkinnedMesh) m_pSkinnedMesh->SetAnimationIndex(0);
 		break;
 	case WM_RBUTTONDOWN:
 	{

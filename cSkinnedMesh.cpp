@@ -33,6 +33,7 @@ void cSkinnedMesh::Setup(char* szFolder, char* szFile)
 		&m_pAnimController);
 
 	SetupBoneMatrixPtrs(m_pRoot);
+	SetAnimationIndex(0);
 }
 
 void cSkinnedMesh::Update()
@@ -40,6 +41,12 @@ void cSkinnedMesh::Update()
 	m_pAnimController->AdvanceTime(g_pTimeManager->GetElapsedTime(), NULL);
 	Update(m_pRoot, NULL);
 	UpdateSkinnedMesh(m_pRoot);
+
+	//animation
+	//if (GetKeyState('Q') & 0x8000)
+	//{
+	//	SetAnimationIndex(m_nAnimationIndex);
+	//}
 }
 
 void cSkinnedMesh::Update(LPD3DXFRAME pFrame, LPD3DXFRAME pParent)
@@ -170,4 +177,22 @@ void cSkinnedMesh::UpdateSkinnedMesh(LPD3DXFRAME pFrame)
 	{
 		UpdateSkinnedMesh(pFrame->pFrameSibling);
 	}
+}
+
+void cSkinnedMesh::SetAnimationIndex(int nIndex)
+{
+	UINT unNumAnimations = m_pAnimController->GetNumAnimationSets();
+	
+	LPD3DXANIMATIONSET pAnimationSet;
+	m_pAnimController->GetAnimationSet(m_nAnimationIndex++, &pAnimationSet);
+	m_pAnimController->SetTrackAnimationSet(0, pAnimationSet);
+
+	if (m_nAnimationIndex >= unNumAnimations) m_nAnimationIndex = 0;
+
+	//0 오른손 내려찍기
+	//1 양손 빠르게
+	//2 양손 느리게
+	//3 달리기
+	//4 가만히
+
 }
