@@ -21,6 +21,8 @@ class cMtlTex;
 
 class cUI;
 
+class cSkinnedMesh;
+
 class cMainGame
 {
 public:
@@ -80,6 +82,8 @@ private:
 	ID3DXMesh*						m_pMeshXFile;
 	std::vector<D3DMATERIAL9>		m_vecMtlXFile;
 	std::vector<IDirect3DTexture9*> m_vecTexXFile;
+
+	cSkinnedMesh* m_pSkinnedMesh;
 
 public:
 	void Setup();

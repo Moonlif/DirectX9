@@ -23,6 +23,8 @@
 
 #include "cUI.h"
 
+#include "cSkinnedMesh.h"
+
 cMainGame::cMainGame()
 	: m_pCamera(NULL)
 
@@ -47,6 +49,7 @@ cMainGame::cMainGame()
 	, m_pUI(NULL)
 
 	, m_pMeshXFile(NULL)
+	, m_pSkinnedMesh(NULL)
 {	 
 }
 
@@ -85,6 +88,7 @@ cMainGame::~cMainGame()
 
 	//xFile
 	SAFE_RELEASE(m_pMeshXFile);
+	SAFE_DELETE(m_pSkinnedMesh);
 
 	g_pFontManager->Destroy();
 	g_pTextureManager->Destroy();
@@ -138,12 +142,15 @@ void cMainGame::Setup()
 
 	//xFile
 	Setup_xFile();
+	m_pSkinnedMesh = new cSkinnedMesh;
+	m_pSkinnedMesh->Setup("Objects/Zealot", "zealot.X");
 
 	m_pCamera->ReTarget(&m_pWoman->GetPosition());
 }
 
 void cMainGame::Update()
 {
+	g_pTimeManager->Update();
 	if (m_pCamera) m_pCamera->Update();
 
 	if (m_pCubeMan) m_pCubeMan->Update(m_pMap);
@@ -151,6 +158,8 @@ void cMainGame::Update()
 	if (m_pWoman) m_pWoman->Update(m_pMap, m_vecVertexPlane);
 
 	if (m_pUI) m_pUI->Update();
+
+	if (m_pSkinnedMesh) m_pSkinnedMesh->Update();
 }
 
 void cMainGame::Render()
@@ -621,7 +630,7 @@ void cMainGame::Setup_Astar()
 	ZeroMemory(&m_aAstarTile, sizeof(m_aAstarTile));
 
 	FILE *fp;
-	fopen_s(&fp, "astar.txt", "r");
+	fopen_s(&fp, "astar01.txt", "r");
 
 	int loadX = 0;
 	int loadZ = 0;
@@ -643,11 +652,13 @@ void cMainGame::Setup_Astar()
 		}
 		else if (szTemp[loadX] == 'S')
 		{
-			m_aAstarTile[loadX][loadZ].state = ST_ASTAR::E_START;
+			//m_aAstarTile[loadX][loadZ].state = ST_ASTAR::E_START;
+			m_aAstarTile[loadX][loadZ].state = ST_ASTAR::E_NONE;
 		}
 		else if (szTemp[loadX] == 'D')
 		{
-			m_aAstarTile[loadX][loadZ].state = ST_ASTAR::E_DESTINATION;
+			//m_aAstarTile[loadX][loadZ].state = ST_ASTAR::E_DESTINATION;
+			m_aAstarTile[loadX][loadZ].state = ST_ASTAR::E_NONE;
 		}
 		else
 		{
@@ -733,10 +744,10 @@ void cMainGame::Calculate_Astar()
 	}
 
 	//set vecRoute
-	//m_ptAstarStart.x = m_pWoman->GetPosition().x;
-	//m_ptAstarStart.y = m_pWoman->GetPosition().z;
-	//m_ptAstarDest.x = m_vPickedPosition.x;
-	//m_ptAstarDest.y = m_vPickedPosition.z;
+	m_ptAstarStart.x = m_pWoman->GetPosition().x;
+	m_ptAstarStart.y = m_pWoman->GetPosition().z;
+	m_ptAstarDest.x = m_vPickedPosition.x;
+	m_ptAstarDest.y = m_vPickedPosition.z;
 
 	m_vecAstarRoute.clear();
 	m_vecAstarOpenList.clear();
@@ -992,19 +1003,24 @@ void cMainGame::xFile_Render()
 {
 	g_pD3DDevice->SetRenderState(D3DRS_LIGHTING, true);
 
-	static float y = 0.0f;
-	D3DXMATRIXA16 matR;
-	D3DXMatrixRotationY(&matR, y);
-	y += 0.01f;
+	//static float y = 0.0f;
+	//D3DXMATRIXA16 matR;
+	//D3DXMatrixRotationY(&matR, y);
+	//y += 0.01f;
 
-	if (y >= D3DX_PI * 2) y = 0.0f;
-	
-	g_pD3DDevice->SetTransform(D3DTS_WORLD, &matR);
+	//if (y >= D3DX_PI * 2) y = 0.0f;
+	//
+	//g_pD3DDevice->SetTransform(D3DTS_WORLD, &matR);
 
-	for (int i = 0; i < m_vecMtlXFile.size(); ++i)
-	{
-		g_pD3DDevice->SetMaterial(&m_vecMtlXFile[i]);
-		g_pD3DDevice->SetTexture(0, m_vecTexXFile[i]);
-		m_pMeshXFile->DrawSubset(i);
-	}
+	//for (int i = 0; i < m_vecMtlXFile.size(); ++i)
+	//{
+	//	g_pD3DDevice->SetMaterial(&m_vecMtlXFile[i]);
+	//	g_pD3DDevice->SetTexture(0, m_vecTexXFile[i]);
+	//	m_pMeshXFile->DrawSubset(i);
+	//}
+
+	D3DXMATRIXA16 matWorld;
+	D3DXMatrixIdentity(&matWorld);
+	g_pD3DDevice->SetTransform(D3DTS_WORLD, &matWorld);
+	if (m_pSkinnedMesh) m_pSkinnedMesh->Render(NULL);
 }
