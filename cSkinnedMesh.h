@@ -8,7 +8,10 @@ public:
 protected:
 	LPD3DXFRAME m_pRoot;
 	LPD3DXANIMATIONCONTROLLER	m_pAnimController;	//모든 애니메이션 정보
-	int m_nAnimationIndex;
+
+	float m_fBlendTime;
+	float m_fPassedBlendTime;
+	bool m_isAnimBlend;
 
 public:
 	void Setup(char* szFolder, char* szFile);
@@ -20,5 +23,6 @@ public:
 
 	//animation
 	void SetAnimationIndex(int nIndex);
+	void SetAnimationIndexBlend(int nIndex);
 };
 

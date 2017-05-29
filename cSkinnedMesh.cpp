@@ -5,6 +5,9 @@
 cSkinnedMesh::cSkinnedMesh()
 	: m_pRoot(NULL)
 	, m_pAnimController(NULL)
+	, m_fBlendTime(0.3f)
+	, m_fPassedBlendTime(0.0f)
+	, m_isAnimBlend(false)
 {
 }
 
@@ -38,15 +41,27 @@ void cSkinnedMesh::Setup(char* szFolder, char* szFile)
 
 void cSkinnedMesh::Update()
 {
+	//animation
+	if (m_isAnimBlend)
+	{
+		m_fPassedBlendTime += g_pTimeManager->GetElapsedTime();
+		if (m_fPassedBlendTime >= m_fBlendTime)
+		{
+			m_isAnimBlend = false;
+			m_pAnimController->SetTrackWeight(0, 1.0f);
+			m_pAnimController->SetTrackEnable(1, false);
+		}
+		else
+		{
+			float fWeight = m_fPassedBlendTime / m_fBlendTime;
+			m_pAnimController->SetTrackWeight(0, fWeight);
+			m_pAnimController->SetTrackWeight(1, 1.0f - fWeight);
+		}
+	}
+
 	m_pAnimController->AdvanceTime(g_pTimeManager->GetElapsedTime(), NULL);
 	Update(m_pRoot, NULL);
 	UpdateSkinnedMesh(m_pRoot);
-
-	//animation
-	//if (GetKeyState('Q') & 0x8000)
-	//{
-	//	SetAnimationIndex(m_nAnimationIndex);
-	//}
 }
 
 void cSkinnedMesh::Update(LPD3DXFRAME pFrame, LPD3DXFRAME pParent)
@@ -182,12 +197,16 @@ void cSkinnedMesh::UpdateSkinnedMesh(LPD3DXFRAME pFrame)
 void cSkinnedMesh::SetAnimationIndex(int nIndex)
 {
 	UINT unNumAnimations = m_pAnimController->GetNumAnimationSets();
-	
-	LPD3DXANIMATIONSET pAnimationSet;
-	m_pAnimController->GetAnimationSet(m_nAnimationIndex++, &pAnimationSet);
-	m_pAnimController->SetTrackAnimationSet(0, pAnimationSet);
+	if (nIndex > unNumAnimations) nIndex = nIndex % unNumAnimations;
 
-	if (m_nAnimationIndex >= unNumAnimations) m_nAnimationIndex = 0;
+	LPD3DXANIMATIONSET pAnimationSet;
+	m_pAnimController->GetAnimationSet(nIndex, &pAnimationSet);
+	m_pAnimController->SetTrackAnimationSet(0, pAnimationSet);
+	
+	//애니메이션을 섞는다?
+	m_pAnimController->GetPriorityBlend();
+
+	SAFE_RELEASE(pAnimationSet);
 
 	//0 오른손 내려찍기
 	//1 양손 빠르게
@@ -195,4 +214,33 @@ void cSkinnedMesh::SetAnimationIndex(int nIndex)
 	//3 달리기
 	//4 가만히
 
+}
+
+void cSkinnedMesh::SetAnimationIndexBlend(int nIndex)
+{
+	m_isAnimBlend = true;
+	m_fPassedBlendTime = 0.0f;
+
+	UINT unNumAnimations = m_pAnimController->GetNumAnimationSets();
+	if (nIndex > unNumAnimations) nIndex = nIndex % unNumAnimations;
+
+	LPD3DXANIMATIONSET pPrevAnimSet = NULL;
+	LPD3DXANIMATIONSET pNextAnimSet = NULL;
+
+	D3DXTRACK_DESC stTrackDesc;
+	m_pAnimController->GetTrackDesc(0, &stTrackDesc);
+
+	m_pAnimController->GetTrackAnimationSet(0, &pPrevAnimSet);
+	m_pAnimController->SetTrackAnimationSet(1, pPrevAnimSet);
+	m_pAnimController->SetTrackDesc(1, &stTrackDesc);
+
+	m_pAnimController->GetAnimationSet(nIndex, &pNextAnimSet);
+	m_pAnimController->SetTrackAnimationSet(0, pNextAnimSet);
+	m_pAnimController->SetTrackPosition(0, 0.0f);
+
+	m_pAnimController->SetTrackWeight(0, 0.0f);
+	m_pAnimController->SetTrackWeight(1, 1.0f);
+
+	SAFE_RELEASE(pPrevAnimSet);
+	SAFE_RELEASE(pNextAnimSet);
 }
