@@ -23,6 +23,8 @@ class cUI;
 
 class cSkinnedMesh;
 
+class cFrustum;
+
 class cMainGame
 {
 public:
@@ -84,6 +86,10 @@ private:
 	std::vector<IDirect3DTexture9*> m_vecTexXFile;
 
 	cSkinnedMesh* m_pSkinnedMesh;
+
+	//Frustum culling
+	cFrustum* m_pFrustum;
+	std::vector<cCubePC*> m_vecCubePC;
 
 public:
 	void Setup();

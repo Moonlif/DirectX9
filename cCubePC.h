@@ -18,5 +18,6 @@ public:
 	void Update();
 	void Render();
 	D3DXVECTOR3& GetPosition();
+	void SetPosition(D3DXVECTOR3 vPosition);
 };
 

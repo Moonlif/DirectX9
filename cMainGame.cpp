@@ -25,6 +25,8 @@
 
 #include "cSkinnedMesh.h"
 
+#include "cFrustum.h"
+
 cMainGame::cMainGame()
 	: m_pCamera(NULL)
 
@@ -130,7 +132,7 @@ void cMainGame::Setup()
 	//m_pMeshObjectMap = objLoader.LoadMesh(m_vecMtlTexObjectMap, "objects", "Map.obj");	//object map by mesh
 
 	//font
-	//Create_Font();
+	Create_Font();
 
 	//ui
 	//Setup_UI();
@@ -138,12 +140,27 @@ void cMainGame::Setup()
 	//m_pUI->Setup();
 
 	//astar
-	Setup_Astar();
+	//Setup_Astar();
 
 	//xFile
-	Setup_xFile();
-	m_pSkinnedMesh = new cSkinnedMesh;
-	m_pSkinnedMesh->Setup("Objects/Zealot", "zealot.X");
+	//Setup_xFile();
+	//m_pSkinnedMesh = new cSkinnedMesh;
+	//m_pSkinnedMesh->Setup("Objects/Zealot", "zealot.X");
+
+	//Frustum culling
+	m_pFrustum = new cFrustum;
+	m_pFrustum->Setup();
+	for (int i = 0; i < 50; ++i)
+	{
+		for (int j = 0; j < 50; ++j)
+		{
+			cCubePC* tempCube = new cCubePC;
+			tempCube->Setup();
+			tempCube->SetPosition(D3DXVECTOR3(i, 0, j));
+			m_vecCubePC.push_back(tempCube);
+		}
+
+	}
 
 	m_pCamera->ReTarget(&m_pWoman->GetPosition());
 }
@@ -160,6 +177,13 @@ void cMainGame::Update()
 	if (m_pUI) m_pUI->Update();
 
 	if (m_pSkinnedMesh) m_pSkinnedMesh->Update();
+
+	//Frustum culling
+	m_pFrustum->Update();
+	for (int i = 0; i < 50*50; ++i)
+	{
+		m_vecCubePC[i]->Update();
+	}
 }
 
 void cMainGame::Render()
@@ -184,17 +208,33 @@ void cMainGame::Render()
 	//Mesh_Render();
 
 	//text
-	//Text_Render();
+	Text_Render();
 
 	//ui
 	//UI_Render();
-	if (m_pUI) m_pUI->Render();
+	//if (m_pUI) m_pUI->Render();
 
 	//astar
-	Astar_Render();
+	//Astar_Render();
 
 	//xFile
-	xFile_Render();
+	//xFile_Render();
+	
+	//Frustum culling
+	int count = 0;
+	for (int i = 0; i < 50*50; ++i)
+	{
+		if (m_pFrustum->IsIn(&m_vecCubePC[i]->GetPosition()))
+		{
+			count++;
+			for (int j = 0; j < 10; ++j)
+			{
+				m_vecCubePC[i]->Render();
+			}
+		}
+	}
+
+	int a = 0;
 
 	g_pD3DDevice->EndScene();
 	g_pD3DDevice->Present(NULL, NULL, NULL, NULL);
@@ -224,7 +264,7 @@ void cMainGame::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				m_vPickedPosition = v;
 			}
 		}
-		Calculate_Astar();
+		//Calculate_Astar();
 		if (m_pWoman) m_pWoman->SetRoute(m_vecAstarRoute);
 	}
 	break;

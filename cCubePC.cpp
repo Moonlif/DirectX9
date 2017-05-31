@@ -140,3 +140,10 @@ D3DXVECTOR3 & cCubePC::GetPosition()
 {
 	return m_vPosition;
 }
+
+void cCubePC::SetPosition(D3DXVECTOR3 vPosition)
+{
+	m_vPosition.x = vPosition.x;
+	m_vPosition.y = vPosition.y;
+	m_vPosition.z = vPosition.z;
+}
