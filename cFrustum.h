@@ -13,7 +13,7 @@ private:
 public:
 	void Setup();
 	void Update();
-	bool IsIn(D3DXVECTOR3* vPosition);
+	bool IsIn(D3DXVECTOR3* vPosition, float fRadius);
 
 };
 

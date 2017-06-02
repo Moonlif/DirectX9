@@ -224,7 +224,7 @@ void cMainGame::Render()
 	int count = 0;
 	for (int i = 0; i < 50*50; ++i)
 	{
-		if (m_pFrustum->IsIn(&m_vecCubePC[i]->GetPosition()))
+		if (m_pFrustum->IsIn(&m_vecCubePC[i]->GetPosition(), 1.0f))
 		{
 			count++;
 			for (int j = 0; j < 10; ++j)

@@ -20,18 +20,17 @@ void cFrustum::Setup()
 	m_vecWorldVertex.clear();
 	m_vecPlane.clear();
 
-	D3DXVECTOR3 v;
-	v = D3DXVECTOR3(-1.0f, 1.0f, 0.0f); m_vecProjVertex.push_back(v);
-	v = D3DXVECTOR3(1.0f, 1.0f, 0.0f); m_vecProjVertex.push_back(v);
-	v = D3DXVECTOR3(-1.0f, -1.0f, 0.0f); m_vecProjVertex.push_back(v);
-	v = D3DXVECTOR3(1.0f, -1.0f, 0.0f); m_vecProjVertex.push_back(v);
+	m_vecProjVertex.push_back(D3DXVECTOR3(-1.0f, 1.0f, 0.0f));
+	m_vecProjVertex.push_back(D3DXVECTOR3(1.0f, 1.0f, 0.0f));
+	m_vecProjVertex.push_back(D3DXVECTOR3(-1.0f, -1.0f, 0.0f));
+	m_vecProjVertex.push_back(D3DXVECTOR3(1.0f, -1.0f, 0.0f));
 
-	v = D3DXVECTOR3(-1.0f, 1.0f, 1.0f); m_vecProjVertex.push_back(v);
-	v = D3DXVECTOR3(1.0f, 1.0f, 1.0f); m_vecProjVertex.push_back(v);
-	v = D3DXVECTOR3(-1.0f, -1.0f, 1.0f); m_vecProjVertex.push_back(v);
-	v = D3DXVECTOR3(1.0f, -1.0f, 1.0f); m_vecProjVertex.push_back(v);
+	m_vecProjVertex.push_back(D3DXVECTOR3(-1.0f, 1.0f, 1.0f));
+	m_vecProjVertex.push_back(D3DXVECTOR3(1.0f, 1.0f, 1.0f));
+	m_vecProjVertex.push_back(D3DXVECTOR3(-1.0f, -1.0f, 1.0f));
+	m_vecProjVertex.push_back(D3DXVECTOR3(1.0f, -1.0f, 1.0f));
 
-	m_vecWorldVertex.resize(m_vecProjVertex.size());
+	m_vecWorldVertex.resize(8);
 	m_vecPlane.resize(6);
 }
 
@@ -61,7 +60,7 @@ void cFrustum::Update()
 	D3DXPlaneFromPoints(&m_vecPlane[5], &m_vecWorldVertex[7], &m_vecWorldVertex[6], &m_vecWorldVertex[3]);
 }
 
-bool cFrustum::IsIn(D3DXVECTOR3* vPosition)
+bool cFrustum::IsIn(D3DXVECTOR3* vPosition, float fRadius)
 {
 	// 각 면에 loop
 	// 안에 있는지 밖에 있는지 걸쳐있는지...
@@ -71,7 +70,7 @@ bool cFrustum::IsIn(D3DXVECTOR3* vPosition)
 	{
 		float d = D3DXPlaneDotCoord(&m_vecPlane[i], vPosition);
 		
-		if (d < 0.0f);
+		if (d < fRadius);
 		else return false;
 	}
 
